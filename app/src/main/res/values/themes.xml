@@ -1,6 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.WeatherForecastApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="windowNoTitle">false</item>
     </style>
 
     <style name="Theme.WeatherForecastApp" parent="Base.Theme.WeatherForecastApp" />
