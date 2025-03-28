@@ -40,7 +40,10 @@ android {
 }
 
 dependencies {
-
+    implementation(libs.volley)
+    implementation(libs.picasso)
+    implementation(libs.androidx.fragment)
+    implementation(libs.play.services.location)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
