@@ -1,2 +1,0 @@
-# WeatherForecastApp
-Weather forecast app
