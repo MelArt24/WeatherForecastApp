@@ -10,9 +10,10 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentActivity
 import com.am24.weatherforecastapp.R
+import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
-import com.google.android.material.tabs.TabLayout
+import com.android.volley.toolbox.Volley
 import com.google.android.material.tabs.TabLayoutMediator
 
 class MainFragment : Fragment() {
@@ -63,6 +64,18 @@ class MainFragment : Fragment() {
             permissionListener()
             paramLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+    }
+
+    private fun requestWeatherData(city: String) {
+        val url = "https://api.weatherapi.com/v1/forecast.json?key=" +
+                WEATHER_API_KEY +
+                "&q=" +
+                "London" +
+                "&days=" +
+                "3" +
+                "&aqi=no&alerts=no"
+
+        val queue = Volley.newRequestQueue(context)
     }
 
     companion object {
