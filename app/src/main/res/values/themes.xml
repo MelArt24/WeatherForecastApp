@@ -1,0 +1,8 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.WeatherForecastApp" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorPrimaryVariant">@color/blue</item>
+    </style>
+
+    <style name="Theme.WeatherForecastApp" parent="Base.Theme.WeatherForecastApp" />
+</resources>
