@@ -8,10 +8,25 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.FragmentActivity
 import com.am24.weatherforecastapp.R
+import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 
 class MainFragment : Fragment() {
+
+    private val fragmentList = listOf(
+        HoursFragment.newInstance(),
+        DaysFragment.newInstance()
+    )
+
+    private val tabList = listOf(
+        "Hours",
+        "Days"
+    )
+
     private lateinit var paramLauncher: ActivityResultLauncher<String>
     private lateinit var binding: FragmentMainBinding
 
@@ -26,6 +41,15 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkPermission()
+        init()
+    }
+
+    private fun init() = with(binding) {
+        val adapter = ViewPageAdapter(activity as FragmentActivity, fragmentList)
+        viewPage.adapter = adapter
+        TabLayoutMediator(tabLayout, viewPage){
+            tab, position -> tab.text = tabList[position]
+        }.attach()
     }
 
     private fun permissionListener(){
