@@ -13,11 +13,13 @@ import androidx.fragment.app.FragmentActivity
 import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
+import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.material.tabs.TabLayoutMediator
+import org.json.JSONObject
 
 class MainFragment : Fragment() {
 
@@ -82,13 +84,29 @@ class MainFragment : Fragment() {
         val request = StringRequest(
             Request.Method.GET, url,
             {
-                result -> Log.d("MyLog", "Error: $result")
+                result -> parseWeatherData(result)
             },
             {
                 error -> Log.d("MyLog", "Error: $error")
             }
         )
         queue.add(request)
+    }
+
+    private fun parseWeatherData(result: String) {
+        val mainObject = JSONObject(result)
+        val item = WeatherModel(
+            mainObject.getJSONObject("location").getString("name"),
+            mainObject.getJSONObject("current").getString("last_updated"),
+            mainObject.getJSONObject("current").getJSONObject("condition")
+                .getString("text"),
+            mainObject.getJSONObject("current").getString("temp_c"),
+            "",
+            "",
+            mainObject.getJSONObject("current").getJSONObject("condition")
+                .getString("icon"),
+            ""
+        )
     }
 
     companion object {
