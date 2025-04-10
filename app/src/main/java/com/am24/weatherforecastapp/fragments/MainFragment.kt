@@ -2,6 +2,7 @@ package com.am24.weatherforecastapp.fragments
 
 import android.Manifest
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,8 @@ import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
+import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.material.tabs.TabLayoutMediator
 
@@ -76,6 +79,16 @@ class MainFragment : Fragment() {
                 "&aqi=no&alerts=no"
 
         val queue = Volley.newRequestQueue(context)
+        val request = StringRequest(
+            Request.Method.GET, url,
+            {
+                result -> Log.d("MyLog", "Error: $result")
+            },
+            {
+                error -> Log.d("MyLog", "Error: $error")
+            }
+        )
+        queue.add(request)
     }
 
     companion object {
