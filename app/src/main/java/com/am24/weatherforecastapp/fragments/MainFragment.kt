@@ -96,7 +96,7 @@ class MainFragment : Fragment() {
     private fun parseWeatherData(result: String) {
         val mainObject = JSONObject(result)
         val list = parseDays(mainObject)
-        parseCurrentData(mainObject)
+        parseCurrentData(mainObject, list[0])
     }
 
     private fun parseDays(mainObject: JSONObject): List<WeatherModel> {
