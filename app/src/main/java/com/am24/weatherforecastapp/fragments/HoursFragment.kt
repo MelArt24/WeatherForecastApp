@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.adapters.WeatherAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentHoursBinding
@@ -32,7 +31,19 @@ class HoursFragment : Fragment() {
         rvHours.layoutManager = LinearLayoutManager(activity)
         adapter = WeatherAdapter()
         rvHours.adapter = adapter
-        adapter.submitList()
+        val listForTest = listOf(
+            WeatherModel(
+                "",
+                "10:00",
+                "Windy",
+                "3°C",
+                "",
+                "",
+                "",
+                ""
+            )
+        )
+        adapter.submitList(listForTest)
     }
 
     companion object {

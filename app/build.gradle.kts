@@ -43,6 +43,7 @@ android {
 }
 
 dependencies {
+    implementation (libs.androidx.activity.ktx)
     implementation(libs.volley)
     implementation(libs.picasso)
     implementation(libs.androidx.fragment)

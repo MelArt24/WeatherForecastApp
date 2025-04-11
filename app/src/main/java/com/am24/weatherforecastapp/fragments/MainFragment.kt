@@ -10,6 +10,8 @@ import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModelProvider
+import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
@@ -19,7 +21,10 @@ import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.material.tabs.TabLayoutMediator
+import com.squareup.picasso.Picasso
 import org.json.JSONObject
+
+
 
 class MainFragment : Fragment() {
 
@@ -35,6 +40,10 @@ class MainFragment : Fragment() {
 
     private lateinit var paramLauncher: ActivityResultLauncher<String>
     private lateinit var binding: FragmentMainBinding
+    private val model: MainViewModel by lazy {
+        ViewModelProvider(requireActivity())[MainViewModel::class.java]
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,6 +57,8 @@ class MainFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         checkPermission()
         init()
+        updateCard()
+        requestWeatherData("Kyiv")
     }
 
     private fun init() = with(binding) {
@@ -56,6 +67,18 @@ class MainFragment : Fragment() {
         TabLayoutMediator(tabLayout, viewPage){
             tab, position -> tab.text = tabList[position]
         }.attach()
+    }
+
+    private fun updateCard() = with(binding) {
+        model.dataCurrent.observe(viewLifecycleOwner) {
+            val maxMinTemperature = "${it.maximumTemperature}°C/${it.minimumTemperature}°C"
+            tvDate.text = it.time
+            tvCurrentTemperature.text = it.currentTemperature
+            tvCity.text = it.city
+            tvCondition.text = it.condition
+            tvMaxMinTemperature.text = maxMinTemperature
+            Picasso.get().load(it.imageURL).into(ivWeather)
+        }
     }
 
     private fun permissionListener(){
@@ -75,7 +98,7 @@ class MainFragment : Fragment() {
         val url = "https://api.weatherapi.com/v1/forecast.json?key=" +
                 WEATHER_API_KEY +
                 "&q=" +
-                "London" +
+                city +
                 "&days=" +
                 "3" +
                 "&aqi=no&alerts=no"
@@ -110,12 +133,12 @@ class MainFragment : Fragment() {
             val item = WeatherModel(
                 name,
                 day.getString("date"),
-                day.getJSONObject("day").getJSONObject("condiition")
+                day.getJSONObject("day").getJSONObject("condition")
                     .getString("text"),
                 "",
                 day.getJSONObject("day").getString("maxtemp_c"),
                 day.getJSONObject("day").getString("mintemp_c"),
-                day.getJSONObject("day").getJSONObject("condiition")
+                day.getJSONObject("day").getJSONObject("condition")
                     .getString("icon"),
                 day.getJSONArray("hour").toString()
             )
@@ -137,6 +160,7 @@ class MainFragment : Fragment() {
                 .getString("icon"),
             weatherItem.hours
         )
+        model.dataCurrent.value = item
     }
 
     companion object {
