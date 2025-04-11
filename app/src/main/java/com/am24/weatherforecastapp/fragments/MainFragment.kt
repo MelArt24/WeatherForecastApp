@@ -77,7 +77,7 @@ class MainFragment : Fragment() {
             tvCity.text = it.city
             tvCondition.text = it.condition
             tvMaxMinTemperature.text = maxMinTemperature
-            Picasso.get().load(it.imageURL).into(ivWeather)
+            Picasso.get().load("https:" + it.imageURL).into(ivWeather)
         }
     }
 
