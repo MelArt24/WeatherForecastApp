@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.am24.weatherforecastapp.MainViewModel
-import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
