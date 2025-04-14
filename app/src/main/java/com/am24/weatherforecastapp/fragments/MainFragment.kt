@@ -70,12 +70,12 @@ class MainFragment : Fragment() {
 
     private fun updateCard() = with(binding) {
         model.dataCurrent.observe(viewLifecycleOwner) {
-            val maxMinTemperature = "${it.maximumTemperature}°C/${it.minimumTemperature}°C"
+            val maxMinTemperature = "${it.maximumTemperature}°C / ${it.minimumTemperature}°C"
             tvDate.text = it.time
-            tvCurrentTemperature.text = it.currentTemperature
+            tvCurrentTemperature.text = it.currentTemperature.ifEmpty { maxMinTemperature }
             tvCity.text = it.city
             tvCondition.text = it.condition
-            tvMaxMinTemperature.text = maxMinTemperature
+            tvMaxMinTemperature.text = if(it.currentTemperature.isEmpty()) "" else maxMinTemperature
             Picasso.get().load("https:" + it.imageURL).into(ivWeather)
         }
     }
@@ -135,8 +135,8 @@ class MainFragment : Fragment() {
                 day.getJSONObject("day").getJSONObject("condition")
                     .getString("text"),
                 "",
-                day.getJSONObject("day").getString("maxtemp_c"),
-                day.getJSONObject("day").getString("mintemp_c"),
+                day.getJSONObject("day").getString("maxtemp_c").toFloat().toInt().toString(),
+                day.getJSONObject("day").getString("mintemp_c").toFloat().toInt().toString(),
                 day.getJSONObject("day").getJSONObject("condition")
                     .getString("icon"),
                 day.getJSONArray("hour").toString()
