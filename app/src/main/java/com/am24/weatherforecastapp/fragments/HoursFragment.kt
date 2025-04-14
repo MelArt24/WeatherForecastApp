@@ -33,7 +33,7 @@ class HoursFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initRV()
         model.dataCurrent.observe(viewLifecycleOwner) {
-
+            adapter.submitList(getHoursList(it))
         }
     }
 
@@ -52,10 +52,16 @@ class HoursFragment : Fragment() {
             val item = WeatherModel(
                 weatherItem.city,
                 (hoursArr[i] as JSONObject).getString("time"),
-
-
+                (hoursArr[i] as JSONObject).getJSONObject("condition").getString("text"),
+                (hoursArr[i] as JSONObject).getString("temp_c"),
+                "",
+                "",
+                (hoursArr[i] as JSONObject).getJSONObject("condition").getString("text"),
+                ""
             )
+            list.add(item)
         }
+        return list
     }
 
     companion object {
