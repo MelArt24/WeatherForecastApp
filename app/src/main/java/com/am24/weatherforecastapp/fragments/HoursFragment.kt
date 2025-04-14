@@ -41,7 +41,6 @@ class HoursFragment : Fragment() {
         rvHours.layoutManager = LinearLayoutManager(activity)
         adapter = WeatherAdapter()
         rvHours.adapter = adapter
-
     }
 
     private fun getHoursList(weatherItem: WeatherModel): List<WeatherModel> {

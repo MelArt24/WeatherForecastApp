@@ -143,6 +143,7 @@ class MainFragment : Fragment() {
             )
             list.add(item)
         }
+        model.dataList.value = list
         return list
     }
 
