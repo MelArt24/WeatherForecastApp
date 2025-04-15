@@ -1,7 +1,13 @@
 package com.am24.weatherforecastapp.fragments
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -9,8 +15,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
+import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
@@ -19,6 +27,12 @@ import com.am24.weatherforecastapp.databinding.FragmentMainBinding
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.tabs.TabLayoutMediator
 import com.squareup.picasso.Picasso
 import org.json.JSONObject
@@ -26,6 +40,8 @@ import org.json.JSONObject
 
 
 class MainFragment : Fragment() {
+
+    private lateinit var fLocalProviderClient: FusedLocationProviderClient
 
     private val fragmentList = listOf(
         HoursFragment.newInstance(),
@@ -57,7 +73,13 @@ class MainFragment : Fragment() {
         checkPermission()
         init()
         updateCard()
-        requestWeatherData("Kyiv")
+        getLocation()
+//        requestWeatherData("Kyiv")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkLocation()
     }
 
     private fun init() = with(binding) {
@@ -66,6 +88,51 @@ class MainFragment : Fragment() {
         TabLayoutMediator(tabLayout, viewPage){
             tab, position -> tab.text = tabList[position]
         }.attach()
+
+        fLocalProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+
+        ibSync.setOnClickListener {
+            getLocation()
+            tabLayout.selectTab(tabLayout.getTabAt(0))
+            checkLocation()
+        }
+    }
+
+    private fun checkLocation() {
+        if(isLocationEnabled()) {
+            getLocation()
+        } else {
+            DialogManager.locationSettingsDialog(requireContext(), object : DialogManager.Listener{
+                override fun onClick() {
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+            })
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
+
+    private fun getLocation() {
+        val cancellationToken = CancellationTokenSource()
+
+        if(ActivityCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
+        fLocalProviderClient
+            .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
+            .addOnCompleteListener {
+                requestWeatherData("${it.result.latitude}, ${it.result.longitude}")
+            }
     }
 
     private fun updateCard() = with(binding) {
