@@ -228,7 +228,7 @@ class MainFragment : Fragment() {
             mainObject.getJSONObject("current").getString("last_updated"),
             mainObject.getJSONObject("current").getJSONObject("condition")
                 .getString("text"),
-            mainObject.getJSONObject("current").getString("temp_c"),
+            mainObject.getJSONObject("current").getString("temp_c").toFloat().toInt().toString()  + "°C",
             weatherItem.maximumTemperature,
             weatherItem.minimumTemperature,
             mainObject.getJSONObject("current").getJSONObject("condition")

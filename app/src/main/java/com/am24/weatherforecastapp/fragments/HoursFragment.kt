@@ -52,7 +52,7 @@ class HoursFragment : Fragment() {
                 weatherItem.city,
                 (hoursArr[i] as JSONObject).getString("time"),
                 (hoursArr[i] as JSONObject).getJSONObject("condition").getString("text"),
-                (hoursArr[i] as JSONObject).getString("temp_c"),
+                (hoursArr[i] as JSONObject).getString("temp_c").toFloat().toInt().toString()  + "°C",
                 "",
                 "",
                 (hoursArr[i] as JSONObject).getJSONObject("condition").getString("icon"),
