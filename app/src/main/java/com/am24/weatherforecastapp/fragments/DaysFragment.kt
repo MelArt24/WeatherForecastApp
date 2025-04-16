@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.am24.weatherforecastapp.MainViewModel
-import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.adapters.WeatherAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentDaysBinding
