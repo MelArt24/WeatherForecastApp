@@ -39,6 +39,7 @@
             android:id="@+id/iv"
             android:layout_width="50dp"
             android:layout_height="50dp"
+            android:contentDescription="Weather icon"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"

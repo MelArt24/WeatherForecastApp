@@ -6,8 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".fragments.MainFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView"
         android:layout_width="0dp"
@@ -31,6 +29,7 @@
                 android:id="@+id/iv_weather"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:contentDescription="Current weather icon"
                 android:src="@drawable/ic_launcher_foreground"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -44,7 +43,8 @@
                 android:text="--/--/---- --:--"
                 android:textSize="12sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:id="@+id/tv_city"
@@ -63,10 +63,11 @@
                 android:layout_height="wrap_content"
                 android:text="--°C"
                 android:textColor="@color/white"
-                android:textSize="50dp"
+                android:textSize="50sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_city" />
+                app:layout_constraintTop_toBottomOf="@+id/tv_city"
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:id="@+id/tv_condition"
@@ -76,7 +77,8 @@
                 android:textColor="@color/white"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_current_temperature" />
+                app:layout_constraintTop_toBottomOf="@+id/tv_current_temperature"
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:id="@+id/tv_max_min_temperature"
@@ -86,7 +88,8 @@
                 android:textColor="@color/white"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_condition" />
+                app:layout_constraintTop_toBottomOf="@+id/tv_condition"
+                tools:ignore="HardcodedText" />
 
             <ImageButton
                 android:id="@+id/ib_search"
@@ -95,6 +98,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginBottom="10dp"
                 android:background="@null"
+                android:contentDescription="Search your city"
                 android:src="@drawable/ic_search"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -107,6 +111,7 @@
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
                 android:background="@null"
+                android:contentDescription="Temperature synchronization"
                 android:src="@drawable/ic_sync"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
