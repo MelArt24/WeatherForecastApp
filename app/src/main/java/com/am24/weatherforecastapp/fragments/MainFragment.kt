@@ -47,17 +47,13 @@ class MainFragment : Fragment() {
         DaysFragment.newInstance()
     )
 
-    private val tabList = listOf(
-        "Hours",
-        "Days"
-    )
-
     private lateinit var paramLauncher: ActivityResultLauncher<String>
     private lateinit var binding: FragmentMainBinding
     private val model: MainViewModel by lazy {
         ViewModelProvider(requireActivity())[MainViewModel::class.java]
     }
 
+    private lateinit var tabList: List<String>
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -70,6 +66,10 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkPermission()
+        tabList = listOf(
+            getString(R.string.hours),
+            getString(R.string.days)
+        )
         init()
         updateCard()
         getLocation()
@@ -84,8 +84,9 @@ class MainFragment : Fragment() {
     private fun init() = with(binding) {
         val adapter = ViewPageAdapter(activity as FragmentActivity, fragmentList)
         viewPage.adapter = adapter
-        TabLayoutMediator(tabLayout, viewPage){
-            tab, position -> tab.text = tabList[position]
+
+        TabLayoutMediator(tabLayout, viewPage){ tab, position ->
+            tab.text = tabList[position]
         }.attach()
 
         fLocalProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
@@ -129,12 +130,12 @@ class MainFragment : Fragment() {
         val cancellationToken = CancellationTokenSource()
 
         if(ActivityCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED) {
+            ) != PackageManager.PERMISSION_GRANTED) {
             return
         }
 
@@ -195,10 +196,10 @@ class MainFragment : Fragment() {
         val request = StringRequest(
             Request.Method.GET, url,
             {
-                result -> parseWeatherData(result)
+                    result -> parseWeatherData(result)
             },
             {
-                error -> Log.d("MyLog", "Error: $error")
+                    error -> Log.d("MyLog", "Error: $error")
             }
         )
         queue.add(request)
