@@ -2,4 +2,5 @@
     <string name="app_name">Weather Forecast App</string>
     <string name="current_weather_icon">Current weather icon</string>
     <string name="wednesday_09_04_2025">Wednesday 09/04/2025</string>
+    <string name="location_error">Failed to get location</string>
 </resources>

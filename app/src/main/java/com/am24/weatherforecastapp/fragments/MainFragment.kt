@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
@@ -19,6 +20,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
+import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
@@ -136,10 +138,28 @@ class MainFragment : Fragment() {
             return
         }
 
+//        fLocalProviderClient
+//            .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
+//            .addOnCompleteListener {
+//                requestWeatherData("${it.result.latitude}, ${it.result.longitude}")
+//            }
+
         fLocalProviderClient
             .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
-            .addOnCompleteListener {
-                requestWeatherData("${it.result.latitude}, ${it.result.longitude}")
+            .addOnCompleteListener { task ->
+                val location = task.result
+                if (location != null) {
+                    val lat = location.latitude
+                    val lon = location.longitude
+                    requestWeatherData("$lat, $lon")
+                } else {
+                    Log.e("LocationError", "Location is null")
+                    Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("LocationError", "Failed to get location: ${e.message}")
+                Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
             }
     }
 

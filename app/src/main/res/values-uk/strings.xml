@@ -2,4 +2,5 @@
     <string name="app_name">Прогноз погоди</string>
     <string name="current_weather_icon">Значок поточної погоди</string>
     <string name="wednesday_09_04_2025">Середа 09/04/2025</string>
+    <string name="location_error">Не вдалося отримати місцеположення</string>
 </resources>
