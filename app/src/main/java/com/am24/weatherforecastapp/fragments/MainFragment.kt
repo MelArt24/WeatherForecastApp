@@ -138,12 +138,6 @@ class MainFragment : Fragment() {
             return
         }
 
-//        fLocalProviderClient
-//            .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
-//            .addOnCompleteListener {
-//                requestWeatherData("${it.result.latitude}, ${it.result.longitude}")
-//            }
-
         fLocalProviderClient
             .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
             .addOnCompleteListener { task ->

@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginBottom="5dp"
-            android:text="Sunny"
+            android:text="@string/sunny"
             android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -39,7 +39,7 @@
             android:id="@+id/iv"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:contentDescription="Weather icon"
+            android:contentDescription="@string/weather_icon"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -56,6 +56,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/iv"
             app:layout_constraintStart_toEndOf="@+id/tv_date"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="HardcodedText" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

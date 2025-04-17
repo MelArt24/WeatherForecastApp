@@ -3,4 +3,11 @@
     <string name="current_weather_icon">Значок поточної погоди</string>
     <string name="wednesday_09_04_2025">Середа 09/04/2025</string>
     <string name="location_error">Не вдалося отримати місцеположення</string>
+    <string name="your_city">Ваше місто</string>
+    <string name="search_your_city">Шукайте своє місто</string>
+    <string name="temperature_synchronization">Синхронізація температури</string>
+    <string name="hours">Години</string>
+    <string name="days">Дні</string>
+    <string name="sunny">Сонячно</string>
+    <string name="weather_icon">Іконка погоди</string>
 </resources>
