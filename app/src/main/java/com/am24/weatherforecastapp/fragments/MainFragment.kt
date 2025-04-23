@@ -226,6 +226,7 @@ class MainFragment : Fragment() {
             Request.Method.GET, url,
             {
                     result -> parseWeatherData(result)
+                    Log.d("MyLog", city)
             },
             {
                     error -> Log.d("MyLog", "Error: $error")
