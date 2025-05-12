@@ -1,10 +1,13 @@
 package com.am24.weatherforecastapp.fragments
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.fragment.app.Fragment
@@ -64,9 +67,21 @@ class MainFragment(
         return binding.root
     }
 
+    @SuppressLint("ServiceCast")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkPermission()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (!notificationManager.areNotificationsEnabled()) {
+                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, requireActivity().packageName)
+                }
+                startActivityForResult(intent, REQUEST_NOTIFICATION_PERMISSION)
+            }
+        }
+
         tabList = listOf(
             getString(R.string.hours),
             getString(R.string.days)
@@ -296,5 +311,6 @@ class MainFragment(
 
     companion object {
         fun newInstance() = MainFragment()
+        private const val REQUEST_NOTIFICATION_PERMISSION = 100
     }
 }
