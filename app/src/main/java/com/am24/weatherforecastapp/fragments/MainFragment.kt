@@ -179,7 +179,7 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun transliterate(text: String): String {
+    fun transliterate(text: String): String {
         val map = mapOf(
             'а' to "a", 'б' to "b", 'в' to "v", 'г' to "h", 'ґ' to "g",
             'д' to "d", 'е' to "e", 'є' to "ye", 'ж' to "zh", 'з' to "z",
