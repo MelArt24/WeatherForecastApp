@@ -26,6 +26,7 @@ import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
 import com.android.volley.Request
+import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -35,7 +36,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.tabs.TabLayoutMediator
 import com.squareup.picasso.Picasso
 import org.json.JSONObject
-
+import java.util.Locale
 
 
 class MainFragment : Fragment() {
@@ -213,17 +214,22 @@ class MainFragment : Fragment() {
 
 
     private fun requestWeatherData(city: String) {
+        val isUkrainian = Locale.getDefault().language == "uk"
+        val langParam = if (isUkrainian) "&lang=uk" else ""
+
         val url = "https://api.weatherapi.com/v1/forecast.json?key=" +
                 WEATHER_API_KEY +
                 "&q=" +
                 city +
                 "&days=" +
                 "3" +
-                "&aqi=no&alerts=no"
+                "&aqi=no&alerts=no" +
+                langParam
 
         val queue = Volley.newRequestQueue(context)
-        val request = StringRequest(
-            Request.Method.GET, url,
+
+        val request = object : StringRequest(
+            Method.GET, url,
             {
                     result -> parseWeatherData(result)
                     Log.d("MyLog", city)
@@ -231,7 +237,16 @@ class MainFragment : Fragment() {
             {
                     error -> Log.d("MyLog", "Error: $error")
             }
-        )
+        ) {
+            override fun parseNetworkResponse(response: com.android.volley.NetworkResponse): Response<String> {
+                return try {
+                    val utf8String = String(response.data, Charsets.UTF_8)
+                    Response.success(utf8String, com.android.volley.toolbox.HttpHeaderParser.parseCacheHeaders(response))
+                } catch (e: Exception) {
+                    Response.error(com.android.volley.ParseError(e))
+                }
+            }
+        }
         queue.add(request)
     }
 
