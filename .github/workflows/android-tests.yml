@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     env:
       WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
@@ -41,3 +41,28 @@ jobs:
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
+
+      - name: Build APKs for instrumentation tests
+        run: ./gradlew assembleDebug assembleDebugAndroidTest
+
+      - name: Create AVD and launch emulator
+        run: |
+          echo "y" | sdkmanager --install "system-images;android-30;google_apis;x86_64"
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --device "pixel"
+          emulator -avd test -no-window -no-audio -no-boot-anim -accel on &
+          adb wait-for-device
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell input keyevent 82
+        timeout-minutes: 10
+
+      - name: Run instrumented tests
+        run: ./gradlew connectedDebugAndroidTest
+
+      - name: Upload Android Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-instrumented-test-report
+          path: app/build/reports/androidTests/connected/
