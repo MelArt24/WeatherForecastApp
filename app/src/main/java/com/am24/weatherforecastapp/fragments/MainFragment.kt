@@ -20,13 +20,13 @@ import androidx.lifecycle.ViewModelProvider
 import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.R
+import com.am24.weatherforecastapp.VolleyProvider
 import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -37,7 +37,9 @@ import org.json.JSONObject
 import java.util.Locale
 
 
-class MainFragment : Fragment() {
+class MainFragment(
+    private val volleyProvider: VolleyProvider = VolleyProvider()
+) : Fragment() {
 
     private lateinit var fLocalProviderClient: FusedLocationProviderClient
 
@@ -198,13 +200,12 @@ class MainFragment : Fragment() {
             'Ю' to "Yu", 'Я' to "Ya", 'Ь' to ""
         )
 
-
         val transliterated = text.map { char -> map[char] ?: char.toString() }.joinToString("")
 
         return transliterated
     }
 
-    private fun requestWeatherData(city: String, isTransliterated: Boolean = false) {
+    fun requestWeatherData(city: String, isTransliterated: Boolean = false) {
         val isUkrainian = Locale.getDefault().language == "uk"
         val langParam = if (isUkrainian) "&lang=uk" else ""
 
@@ -217,7 +218,7 @@ class MainFragment : Fragment() {
                 "&aqi=no&alerts=no" +
                 langParam
 
-        val queue = Volley.newRequestQueue(context)
+        val queue = volleyProvider.getQueue(requireContext())
 
         val request = object : StringRequest(
             Method.GET, url,
