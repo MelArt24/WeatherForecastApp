@@ -10,4 +10,9 @@
     <string name="days">Дні</string>
     <string name="sunny">Сонячно</string>
     <string name="weather_icon">Іконка погоди</string>
+    <string name="enable_location">Увімкнути геолокацію?</string>
+    <string name="want_enable_location">Чи хочете Ви увімкнути геолокацію?</string>
+    <string name="cancel">Відмінити</string>
+    <string name="city_name">Назва міста</string>
+    <string name="enter_city">Введіть Ваше місто</string>
 </resources>

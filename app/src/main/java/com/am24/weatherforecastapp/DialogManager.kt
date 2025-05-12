@@ -9,14 +9,14 @@ object DialogManager {
         val builder = AlertDialog.Builder(context)
         val dialog = builder.create()
 
-        dialog.setTitle("Enable location?")
-        dialog.setMessage("Do you want to enable location?")
+        dialog.setTitle(R.string.enable_location)
+        dialog.setMessage(context.getString(R.string.want_enable_location))
         dialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") {
             _, _, -> listener.onClick(null)
             dialog.dismiss()
         }
 
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel") {
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.cancel)) {
                 _, _, -> dialog.dismiss()
         }
 
@@ -29,14 +29,14 @@ object DialogManager {
         builder.setView(editText)
         val dialog = builder.create()
 
-        dialog.setTitle("City/town name")
-        dialog.setMessage("Enter your city/town")
+        dialog.setTitle(context.getString(R.string.city_name))
+        dialog.setMessage(context.getString(R.string.enter_city))
         dialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") {
                 _, _, -> listener.onClick(editText.text.toString())
             dialog.dismiss()
         }
 
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel") {
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.cancel)) {
                 _, _, -> dialog.dismiss()
         }
 

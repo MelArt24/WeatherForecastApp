@@ -10,4 +10,9 @@
     <string name="days">Days</string>
     <string name="sunny">Sunny</string>
     <string name="weather_icon">Weather icon</string>
+    <string name="enable_location">Enable location?</string>
+    <string name="want_enable_location">Do you want to enable location?</string>
+    <string name="cancel">Cancel</string>
+    <string name="city_name">City/town name</string>
+    <string name="enter_city">Enter your city/town</string>
 </resources>
