@@ -21,7 +21,6 @@ import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.VolleyProvider
-import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
@@ -35,6 +34,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.squareup.picasso.Picasso
 import org.json.JSONObject
 import java.util.Locale
+import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
 
 
 class MainFragment(

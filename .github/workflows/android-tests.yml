@@ -11,6 +11,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
