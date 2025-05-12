@@ -72,12 +72,8 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation (libs.mockk.android)
-
-    androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation ("androidx.test:core-ktx:1.5.0")
-    androidTestImplementation ("androidx.test:rules:1.5.0")
-
-    debugImplementation("androidx.fragment:fragment-testing-manifest:1.8.6")
-    androidTestImplementation("androidx.fragment:fragment-testing:1.8.6")
+    androidTestImplementation (libs.core.ktx)
+    androidTestImplementation (libs.androidx.rules)
+    debugImplementation(libs.androidx.fragment.testing.manifest)
+    androidTestImplementation(libs.androidx.fragment.testing)
 }

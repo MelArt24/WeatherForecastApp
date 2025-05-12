@@ -1,5 +1,6 @@
 [versions]
 agp = "8.7.0-alpha03"
+coreKtxVersion = "1.6.1"
 fragment = "1.8.6"
 kotlin = "1.9.24"
 coreKtx = "1.15.0"
@@ -16,7 +17,7 @@ picasso = "2.71828"
 playServicesLocation = "21.3.0"
 truth = "1.2.0"
 volley = "1.2.1"
-junitJupiter = "5.8.1"
+junitJupiter = "5.8.2"
 junitKtx = "1.2.1"
 uiautomator = "2.3.0"
 
@@ -24,6 +25,10 @@ uiautomator = "2.3.0"
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }
+androidx-fragment-testing = { module = "androidx.fragment:fragment-testing", version.ref = "fragment" }
+androidx-fragment-testing-manifest = { module = "androidx.fragment:fragment-testing-manifest", version.ref = "fragment" }
+androidx-rules = { module = "androidx.test:rules", version.ref = "coreKtxVersion" }
+core-ktx = { module = "androidx.test:core-ktx", version.ref = "coreKtxVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
