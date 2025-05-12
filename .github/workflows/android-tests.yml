@@ -25,8 +25,14 @@ jobs:
 
       - name: Install Android SDK components
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager \
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          mkdir -p $HOME/android-sdk
+          cd $HOME/android-sdk
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+          unzip commandlinetools-linux-7583922_latest.zip
+          yes | $HOME/android-sdk/cmdline-tools/bin/sdkmanager --licenses
+          $HOME/android-sdk/cmdline-tools/bin/sdkmanager \
             "platform-tools" \
             "emulator" \
             "platforms;android-30" \
@@ -55,11 +61,10 @@ jobs:
 
       - name: Create AVD and launch emulator
         run: |
-          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --device "pixel"
-          export PATH=$PATH:$ANDROID_HOME/emulator
+          echo "no" | $HOME/android-sdk/cmdline-tools/bin/avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --device "pixel"
+          export PATH=$PATH:$HOME/android-sdk/emulator
           emulator -avd test -no-window -no-audio -no-boot-anim -accel auto &
           adb wait-for-device
-          sleep 30
           adb shell settings put global window_animation_scale 0
           adb shell settings put global transition_animation_scale 0
           adb shell settings put global animator_duration_scale 0
