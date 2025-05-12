@@ -5,12 +5,4 @@
     android:id="@+id/placeHolder"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-    <!-- Додано контейнер для фрагмента -->
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/fragment_container"
-        android:name="com.am24.weatherforecastapp.fragments.MainFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+    tools:context=".MainActivity"/>

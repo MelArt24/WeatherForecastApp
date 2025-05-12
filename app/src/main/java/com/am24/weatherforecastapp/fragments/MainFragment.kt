@@ -110,19 +110,16 @@ class MainFragment(
     }
 
     private fun checkLocation() {
-        if (isLocationEnabled()) {
+        if(isLocationEnabled()) {
             getLocation()
         } else {
-            if (isAdded) {
-                DialogManager.locationSettingsDialog(requireContext(), object : DialogManager.Listener {
-                    override fun onClick(name: String?) {
-                        startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                    }
-                })
-            }
+            DialogManager.locationSettingsDialog(requireContext(), object : DialogManager.Listener{
+                override fun onClick(name: String?) {
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+            })
         }
     }
-
 
     private fun isLocationEnabled(): Boolean {
         val locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -155,9 +152,7 @@ class MainFragment(
                 }
             }
             .addOnFailureListener {
-                if (isAdded) {
-                    Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -228,9 +223,7 @@ class MainFragment(
         val request = object : StringRequest(
             Method.GET, url,
             { result ->
-                if (isAdded) {
-                    parseWeatherData(result)
-                }
+                parseWeatherData(result)
             },
             { error ->
                 if (!isTransliterated && error.networkResponse?.statusCode == 400) {

@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.junit.ktx)
+    implementation(libs.androidx.uiautomator)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)

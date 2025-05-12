@@ -17,19 +17,16 @@ class MainFragmentTest {
 
     @Before
     fun setUp() {
-        // Запускаємо MainActivity, яка хостить MainFragment
         scenario = ActivityScenario.launch(MainActivity::class.java)
     }
 
     @After
     fun tearDown() {
-        // Закриваємо Activity після тесту
         scenario.close()
     }
 
     @Test
     fun testFragmentDisplaysWeatherData() {
-        // Перевіряємо, що відображаються потрібні TextView
         onView(withId(R.id.tv_current_temperature)).check(matches(isDisplayed()))
         onView(withId(R.id.tv_city)).check(matches(isDisplayed()))
     }
