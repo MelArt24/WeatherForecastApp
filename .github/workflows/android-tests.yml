@@ -23,12 +23,14 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
-      - name: Set up Android SDK
+      - name: Install Android SDK components
         run: |
-          echo "y" | sdkmanager --licenses
-          sdkmanager "platform-tools" "emulator" "platforms;android-30" "system-images;android-30;google_apis;x86_64" "cmdline-tools;latest"
-          mkdir -p $ANDROID_HOME/cmdline-tools/latest
-          mv $ANDROID_HOME/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "emulator" \
+            "platforms;android-30" \
+            "system-images;android-30;google_apis;x86_64"
 
       - name: Cache Gradle
         uses: actions/cache@v3
@@ -56,11 +58,6 @@ jobs:
           echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --device "pixel"
           $ANDROID_HOME/emulator/emulator -avd test -no-window -no-audio -no-boot-anim -accel on &
           adb wait-for-device
-          boot_completed=""
-          until [[ "$boot_completed" == "1" ]]; do
-            sleep 5
-            boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')
-          done
           adb shell settings put global window_animation_scale 0
           adb shell settings put global transition_animation_scale 0
           adb shell settings put global animator_duration_scale 0
@@ -72,7 +69,12 @@ jobs:
 
       - name: Debug test directories
         if: always()
-        run: ls -R app/build
+        run: |
+          if [ -d "app/build" ]; then
+            ls -R app/build
+          else
+            echo "No build directory found"
+          fi
 
       - name: Upload Android Test Reports
         if: always()
