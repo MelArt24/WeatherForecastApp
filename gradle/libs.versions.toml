@@ -17,6 +17,7 @@ playServicesLocation = "21.3.0"
 truth = "1.2.0"
 volley = "1.2.1"
 junitJupiter = "5.8.1"
+junitKtx = "1.2.1"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
@@ -37,8 +38,8 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-

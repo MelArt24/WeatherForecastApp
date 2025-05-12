@@ -52,7 +52,7 @@ android {
 }
 
 dependencies {
-    implementation (libs.androidx.activity.ktx)
+    implementation(libs.androidx.activity.ktx)
     implementation(libs.volley)
     implementation(libs.picasso)
     implementation(libs.androidx.fragment)
@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.junit.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
@@ -70,4 +71,12 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation (libs.mockk.android)
+
+    androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation ("androidx.test:core-ktx:1.5.0")
+    androidTestImplementation ("androidx.test:rules:1.5.0")
+
+    debugImplementation("androidx.fragment:fragment-testing-manifest:1.8.6")
+    androidTestImplementation("androidx.fragment:fragment-testing:1.8.6")
 }
