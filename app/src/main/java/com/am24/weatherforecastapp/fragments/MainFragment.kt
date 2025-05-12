@@ -213,7 +213,7 @@ class MainFragment : Fragment() {
     }
 
 
-    private fun requestWeatherData(city: String) {
+    private fun requestWeatherData(city: String, isTransliterated: Boolean = false) {
         val isUkrainian = Locale.getDefault().language == "uk"
         val langParam = if (isUkrainian) "&lang=uk" else ""
 
@@ -230,12 +230,16 @@ class MainFragment : Fragment() {
 
         val request = object : StringRequest(
             Method.GET, url,
-            {
-                    result -> parseWeatherData(result)
-                    Log.d("MyLog", city)
+            { result ->
+                parseWeatherData(result)
             },
-            {
-                    error -> Log.d("MyLog", "Error: $error")
+            { error ->
+                if (!isTransliterated && error.networkResponse?.statusCode == 400) {
+                    val transliteratedCity = transliterate(city)
+                    requestWeatherData(transliteratedCity, true)
+                } else {
+                    Toast.makeText(requireContext(), getString(R.string.city_not_found), Toast.LENGTH_SHORT).show()
+                }
             }
         ) {
             override fun parseNetworkResponse(response: com.android.volley.NetworkResponse): Response<String> {

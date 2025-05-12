@@ -15,4 +15,6 @@
     <string name="cancel">Cancel</string>
     <string name="city_name">City/town name</string>
     <string name="enter_city">Enter your city/town</string>
+
+    <string name="city_not_found">City is not found</string>
 </resources>
