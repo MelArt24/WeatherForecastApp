@@ -13,5 +13,4 @@ class ViewPageAdapter(fragmentActivity: FragmentActivity, private val list: List
     override fun createFragment(position: Int): Fragment {
         return list[position]
     }
-
 }

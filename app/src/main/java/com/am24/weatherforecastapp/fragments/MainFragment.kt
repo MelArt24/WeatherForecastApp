@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -25,7 +24,6 @@ import com.am24.weatherforecastapp.WEATHER_API_KEY
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
-import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -74,7 +72,6 @@ class MainFragment : Fragment() {
         init()
         updateCard()
         getLocation()
-//        requestWeatherData("Kyiv")
     }
 
     override fun onResume() {
@@ -149,12 +146,10 @@ class MainFragment : Fragment() {
                     val lon = location.longitude
                     requestWeatherData("$lat, $lon")
                 } else {
-                    Log.e("LocationError", "Location is null")
                     Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
                 }
             }
-            .addOnFailureListener { e ->
-                Log.e("LocationError", "Failed to get location: ${e.message}")
+            .addOnFailureListener {
                 Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
             }
     }
@@ -206,12 +201,8 @@ class MainFragment : Fragment() {
 
         val transliterated = text.map { char -> map[char] ?: char.toString() }.joinToString("")
 
-        Log.d("Transliteration", "Original: $text -> Transliterated: $transliterated")
-
-
         return transliterated
     }
-
 
     private fun requestWeatherData(city: String, isTransliterated: Boolean = false) {
         val isUkrainian = Locale.getDefault().language == "uk"
@@ -305,5 +296,4 @@ class MainFragment : Fragment() {
     companion object {
         fun newInstance() = MainFragment()
     }
-
 }
