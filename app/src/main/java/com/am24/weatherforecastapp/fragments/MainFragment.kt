@@ -1,7 +1,6 @@
 package com.am24.weatherforecastapp.fragments
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -39,13 +38,18 @@ import java.util.Locale
 import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
 import com.am24.weatherforecastapp.utils.TransliterationUtils
 
-
+/**
+ * Головний екран додатка.
+ * Керує геолокацією, запитами до мережі та відображенням основної картки погоди.
+ */
 class MainFragment(
     private val volleyProvider: VolleyProvider = VolleyProvider()
 ) : Fragment() {
 
+    // Клієнт для отримання координат користувача
     private lateinit var fLocalProviderClient: FusedLocationProviderClient
 
+    // Список фрагментів для ViewPager2 (години та дні)
     private val fragmentList = listOf(
         HoursFragment.newInstance(),
         DaysFragment.newInstance()
@@ -56,9 +60,14 @@ class MainFragment(
         ViewModelProvider(requireActivity())[MainViewModel::class.java]
     }
 
+    /**
+     * Реєстратор для перевірки дозволу на сповіщення (актуально для Android 13+).
+     * Наразі він просто запускає активність налаштувань і не виконує додаткових дій після повернення.
+     */
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
     }
 
+    // Реєстратор запиту на дозвіл геолокації
     private val locationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) {
             getLocation()
@@ -66,7 +75,6 @@ class MainFragment(
             Toast.makeText(requireContext(), getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
         }
     }
-
 
     private lateinit var tabList: List<String>
 
@@ -78,7 +86,7 @@ class MainFragment(
         return binding.root
     }
 
-    @SuppressLint("ServiceCast")
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkPermission()
@@ -107,22 +115,28 @@ class MainFragment(
         checkLocation()
     }
 
+    /**
+     * Ініціалізація ViewPager2, TabLayout та кнопок керування
+     */
     private fun init() = with(binding) {
         val adapter = ViewPageAdapter(activity as FragmentActivity, fragmentList)
         viewPage.adapter = adapter
 
+        // Зв'язуємо назви вкладок ("Години", "Дні") з ViewPager
         TabLayoutMediator(tabLayout, viewPage){ tab, position ->
             tab.text = tabList[position]
         }.attach()
 
         fLocalProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
+        // Кнопка синхронізації (оновити за GPS)
         ibSync.setOnClickListener {
             getLocation()
-            tabLayout.selectTab(tabLayout.getTabAt(0))
+            tabLayout.selectTab(tabLayout.getTabAt(0))  // Повертаємося на вкладку годин
             checkLocation()
         }
 
+        // Кнопка пошуку міста
         ibSearch.setOnClickListener {
             DialogManager.citySearchDialog(requireContext(), object : DialogManager.Listener{
                 override fun onClick(name: String?) {
@@ -135,23 +149,34 @@ class MainFragment(
         }
     }
 
+    /**
+     * Перевіряє, чи увімкнено GPS у налаштуваннях телефона.
+     * Якщо так — отримуємо локацію. Якщо ні — показуємо діалог з пропозицією увімкнути.
+     */
     private fun checkLocation() {
         if(isLocationEnabled()) {
             getLocation()
         } else {
             DialogManager.locationSettingsDialog(requireContext(), object : DialogManager.Listener{
                 override fun onClick(name: String?) {
+                    // Відкриваємо системне вікно налаштувань локації (GPS)
                     startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 }
             })
         }
     }
 
+    /**
+     * Перевіряє безпосередньо в системі, чи працює зараз GPS-провайдер.
+     */
     private fun isLocationEnabled(): Boolean {
         val locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
+    /**
+     * Утилітарний метод, який просто повертає true/false: чи дав користувач дозвіл [p] нашому додатку.
+     */
     private fun isPermissionGranted(p: String): Boolean {
         return ContextCompat.checkSelfPermission(
             requireContext(),
@@ -159,6 +184,9 @@ class MainFragment(
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    /**
+     * Отримує широту та довготу користувача
+     */
     private fun getLocation() {
         val cancellationToken = CancellationTokenSource()
 
@@ -184,13 +212,13 @@ class MainFragment(
                     Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
                 }
         } catch (e: SecurityException) {
-            // This catches cases where permissions might have been revoked just before this call
-            // or if getCurrentLocation requires a finer permission than what was granted.
-            // You can log the exception here for debugging if needed.
             Toast.makeText(requireContext(), getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
         }
     }
 
+    /**
+     * Спостерігає за dataCurrent у ViewModel і оновлює верхню картку на екрані
+     */
     private fun updateCard() = with(binding) {
         model.dataCurrent.observe(viewLifecycleOwner) {
             val maxMinTemperature = "${it.maximumTemperature}°C / ${it.minimumTemperature}°C"
@@ -203,12 +231,19 @@ class MainFragment(
         }
     }
 
+    /**
+     * Ініціює запит на отримання дозволу на локацію (ACCESS_FINE_LOCATION),
+     * якщо він ще не наданий користувачем.
+     */
     private fun checkPermission() {
         if(!isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)) {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
+    /**
+     * Запит до Weather API через Volley
+     */
     fun requestWeatherData(city: String, isTransliterated: Boolean = false) {
         val isUkrainian = Locale.getDefault().language == "uk"
         val langParam = if (isUkrainian) "&lang=uk" else ""
@@ -230,6 +265,7 @@ class MainFragment(
                 parseWeatherData(result)
             },
             { error ->
+                // Якщо місто не знайдено кирилицею, пробуємо транслітерацію
                 if (!isTransliterated && error.networkResponse?.statusCode == 400) {
                     val transliteratedCity = TransliterationUtils.transliterate(city)
                     requestWeatherData(transliteratedCity, true)
@@ -238,6 +274,7 @@ class MainFragment(
                 }
             }
         ) {
+            // Примусово встановлюємо UTF-8 для коректного відображення кирилиці
             override fun parseNetworkResponse(response: com.android.volley.NetworkResponse): Response<String> {
                 return try {
                     val utf8String = String(response.data, Charsets.UTF_8)
@@ -250,12 +287,19 @@ class MainFragment(
         queue.add(request)
     }
 
+    /**
+     * Розбирає JSON-відповідь на "зараз" та "прогноз на 3 дні"
+     */
     private fun parseWeatherData(result: String) {
         val mainObject = JSONObject(result)
         val list = parseDays(mainObject)
         parseCurrentData(mainObject, list[0])
     }
 
+    /**
+     * Розбирає JSON-відповідь для отримання прогнозу на кілька днів.
+     * Повертає список моделей WeatherModel і записує їх у ViewModel (dataList).
+     */
     private fun parseDays(mainObject: JSONObject): List<WeatherModel> {
         val list = ArrayList<WeatherModel>()
         val daysArray = mainObject.getJSONObject("forecast").getJSONArray("forecastday")
@@ -282,6 +326,10 @@ class MainFragment(
         return list
     }
 
+    /**
+     * Створює фінальний об'єкт "поточної погоди" для головної картки.
+     * Бере дані з розділу "current" і об'єднує їх з макс/мін температурою з першого дня прогнозу.
+     */
     private fun parseCurrentData(mainObject: JSONObject, weatherItem: WeatherModel) {
         val item = WeatherModel(
             mainObject.getJSONObject("location").getString("name"),
@@ -299,6 +347,9 @@ class MainFragment(
     }
 
     companion object {
+        /**
+         * Статичний метод для створення нового екземпляра фрагмента.
+         */
         fun newInstance() = MainFragment()
     }
 }

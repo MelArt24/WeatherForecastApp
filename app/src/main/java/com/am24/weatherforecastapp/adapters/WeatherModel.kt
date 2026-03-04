@@ -1,5 +1,9 @@
 package com.am24.weatherforecastapp.adapters
 
+/**
+ * Модель даних, яка описує стан погоди.
+ * Використовується для передачі інформації від API (інтернету) до екрана користувача.
+ */
 data class WeatherModel(
     val city: String,
     val time: String,

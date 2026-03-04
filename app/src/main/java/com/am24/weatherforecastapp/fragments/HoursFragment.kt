@@ -14,9 +14,14 @@ import com.am24.weatherforecastapp.databinding.FragmentHoursBinding
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Фрагмент для відображення погоди по годинах.
+ */
 class HoursFragment : Fragment() {
     private lateinit var binding: FragmentHoursBinding
     private lateinit var adapter: WeatherAdapter
+
+    // Отримуємо доступ до тієї ж ViewModel, що й в Activity
     private val model: MainViewModel by lazy {
         ViewModelProvider(requireActivity())[MainViewModel::class.java]
     }
@@ -31,18 +36,34 @@ class HoursFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initRV()
+        initRV() // Налаштовуємо список
+
+        /**
+         * Спостерігаємо за переглядом конкретного дня.
+         * Коли користувач обирає день у DaysFragment, дані тут оновлюються,
+         * і ми перемальовуємо години саме для цього дня.
+         */
         model.dataCurrent.observe(viewLifecycleOwner) {
+            // Передаємо в адаптер список, який ми витягли з JSON-рядка
             adapter.submitList(getHoursList(it))
         }
     }
 
+    /**
+     * Ініціалізація списку годин.
+     */
     private fun initRV() = with(binding) {
         rvHours.layoutManager = LinearLayoutManager(activity)
+
+        // Передаємо null, бо нам не потрібна реакція на клік по годині
         adapter = WeatherAdapter(null)
         rvHours.adapter = adapter
     }
 
+    /**
+     * Функція, що бере об'єкт дня, дістає з нього рядок "hours" (JSON формат),
+     * розбирає його на окремі години та створює список об'єктів WeatherModel.
+     */
     private fun getHoursList(weatherItem: WeatherModel): List<WeatherModel> {
         val hoursArr = JSONArray(weatherItem.hours)
         val list = ArrayList<WeatherModel>()
@@ -64,6 +85,9 @@ class HoursFragment : Fragment() {
     }
 
     companion object {
+        /**
+         * Статичний метод для створення нового екземпляра фрагмента.
+         */
         fun newInstance() = HoursFragment()
     }
 }

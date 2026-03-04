@@ -1,6 +1,16 @@
 package com.am24.weatherforecastapp.utils
 
+/**
+ * Утиліта для транслітерації українського тексту на латиницю.
+ * Допомагає API знайти місто, якщо воно не розпізнає назву кирилицею.
+ */
 object TransliterationUtils {
+
+    /**
+     * Перетворює українські літери на їх латинські відповідники.
+     * @param text вихідна назва міста
+     * @return текст латиницею
+     */
     fun transliterate(text: String): String {
         val map = mapOf(
             'а' to "a", 'б' to "b", 'в' to "v", 'г' to "h", 'ґ' to "g",
@@ -20,6 +30,13 @@ object TransliterationUtils {
             'Ю' to "Yu", 'Я' to "Ya", 'Ь' to ""
         )
 
+        /**
+         * Проходимо по кожному символу вхідного тексту:
+         * 1. Шукаємо символ у нашій мапі (map[char]).
+         * 2. Якщо знайшли — беремо латинську версію.
+         * 3. Якщо не знайшли (наприклад, це цифра чи пробіл) — залишаємо як є.
+         * 4. Об'єднуємо все назад у рядок (joinToString).
+         */
         val transliterated = text.map { char -> map[char] ?: char.toString() }.joinToString("")
 
         return transliterated
