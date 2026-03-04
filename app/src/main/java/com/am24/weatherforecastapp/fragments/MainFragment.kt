@@ -15,9 +15,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.am24.weatherforecastapp.DialogManager
@@ -38,6 +37,7 @@ import com.squareup.picasso.Picasso
 import org.json.JSONObject
 import java.util.Locale
 import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
+import com.am24.weatherforecastapp.utils.TransliterationUtils
 
 
 class MainFragment(
@@ -51,11 +51,22 @@ class MainFragment(
         DaysFragment.newInstance()
     )
 
-    private lateinit var paramLauncher: ActivityResultLauncher<String>
     private lateinit var binding: FragmentMainBinding
     private val model: MainViewModel by lazy {
         ViewModelProvider(requireActivity())[MainViewModel::class.java]
     }
+
+    private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
+    }
+
+    private val locationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            getLocation()
+        } else {
+            Toast.makeText(requireContext(), getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     private lateinit var tabList: List<String>
 
@@ -78,7 +89,7 @@ class MainFragment(
                 val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                     putExtra(Settings.EXTRA_APP_PACKAGE, requireActivity().packageName)
                 }
-                startActivityForResult(intent, REQUEST_NOTIFICATION_PERMISSION)
+                notificationPermissionLauncher.launch(intent)
             }
         }
 
@@ -141,34 +152,43 @@ class MainFragment(
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
+    private fun isPermissionGranted(p: String): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            p
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     private fun getLocation() {
         val cancellationToken = CancellationTokenSource()
 
-        if(ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED) {
+        if (!isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            !isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION)) {
             return
         }
 
-        fLocalProviderClient
-            .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
-            .addOnCompleteListener { task ->
-                val location = task.result
-                if (location != null) {
-                    val lat = location.latitude
-                    val lon = location.longitude
-                    requestWeatherData("$lat, $lon")
-                } else {
+        try {
+            fLocalProviderClient
+                .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
+                .addOnCompleteListener { task ->
+                    val location = task.result
+                    if (location != null) {
+                        val lat = location.latitude
+                        val lon = location.longitude
+                        requestWeatherData("$lat, $lon")
+                    } else {
+                        Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .addOnFailureListener { e ->
                     Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
-            }
+        } catch (e: SecurityException) {
+            // This catches cases where permissions might have been revoked just before this call
+            // or if getCurrentLocation requires a finer permission than what was granted.
+            // You can log the exception here for debugging if needed.
+            Toast.makeText(requireContext(), getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateCard() = with(binding) {
@@ -183,41 +203,10 @@ class MainFragment(
         }
     }
 
-    private fun permissionListener(){
-        paramLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-
-        }
-    }
-
     private fun checkPermission() {
         if(!isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            permissionListener()
-            paramLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-    }
-
-    fun transliterate(text: String): String {
-        val map = mapOf(
-            'а' to "a", 'б' to "b", 'в' to "v", 'г' to "h", 'ґ' to "g",
-            'д' to "d", 'е' to "e", 'є' to "ye", 'ж' to "zh", 'з' to "z",
-            'и' to "y", 'і' to "i", 'ї' to "i", 'й' to "y", 'к' to "k",
-            'л' to "l", 'м' to "m", 'н' to "n", 'о' to "o", 'п' to "p",
-            'р' to "r", 'с' to "s", 'т' to "t", 'у' to "u", 'ф' to "f",
-            'х' to "kh", 'ц' to "ts", 'ч' to "ch", 'ш' to "sh", 'щ' to "shch",
-            'ю' to "yu", 'я' to "ya", 'ь' to "", '’' to "", '\'' to "",
-
-            'А' to "A", 'Б' to "B", 'В' to "V", 'Г' to "H", 'Ґ' to "G",
-            'Д' to "D", 'Е' to "E", 'Є' to "Ye", 'Ж' to "Zh", 'З' to "Z",
-            'И' to "Y", 'І' to "I", 'Ї' to "Yi", 'Й' to "Y", 'К' to "K",
-            'Л' to "L", 'М' to "M", 'Н' to "N", 'О' to "O", 'П' to "P",
-            'Р' to "R", 'С' to "S", 'Т' to "T", 'У' to "U", 'Ф' to "F",
-            'Х' to "Kh", 'Ц' to "Ts", 'Ч' to "Ch", 'Ш' to "Sh", 'Щ' to "Shch",
-            'Ю' to "Yu", 'Я' to "Ya", 'Ь' to ""
-        )
-
-        val transliterated = text.map { char -> map[char] ?: char.toString() }.joinToString("")
-
-        return transliterated
     }
 
     fun requestWeatherData(city: String, isTransliterated: Boolean = false) {
@@ -242,7 +231,7 @@ class MainFragment(
             },
             { error ->
                 if (!isTransliterated && error.networkResponse?.statusCode == 400) {
-                    val transliteratedCity = transliterate(city)
+                    val transliteratedCity = TransliterationUtils.transliterate(city)
                     requestWeatherData(transliteratedCity, true)
                 } else {
                     Toast.makeText(requireContext(), getString(R.string.city_not_found), Toast.LENGTH_SHORT).show()
@@ -311,6 +300,5 @@ class MainFragment(
 
     companion object {
         fun newInstance() = MainFragment()
-        private const val REQUEST_NOTIFICATION_PERMISSION = 100
     }
 }

@@ -16,4 +16,5 @@
     <string name="city_name">City/town name</string>
     <string name="enter_city">Enter your city/town</string>
     <string name="city_not_found">City is not found</string>
+    <string name="location_permission_denied">Location permission denied</string>
 </resources>
