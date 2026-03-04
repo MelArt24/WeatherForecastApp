@@ -16,4 +16,5 @@
     <string name="city_name">Назва міста</string>
     <string name="enter_city">Введіть Ваше місто</string>
     <string name="city_not_found">Місто не знайдене</string>
+    <string name="location_permission_denied">Дозвіл на місцезнаходження відхилено</string>
 </resources>
