@@ -27,6 +27,8 @@
 
             <ImageView
                 android:id="@+id/iv_weather"
+                android:layout_marginEnd="5dp"
+                android:layout_marginTop="5dp"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:contentDescription="@string/current_weather_icon"
@@ -71,7 +73,8 @@
 
             <TextView
                 android:id="@+id/tv_condition"
-                android:layout_width="wrap_content"
+                android:layout_width="300dp"
+                android:gravity="center"
                 android:layout_height="wrap_content"
                 android:text="-"
                 android:textColor="@color/white"

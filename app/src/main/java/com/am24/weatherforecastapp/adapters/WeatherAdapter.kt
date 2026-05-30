@@ -50,7 +50,7 @@ class WeatherAdapter(private val listener: Listener?) : ListAdapter<WeatherModel
             if (item.imageURL.isNotEmpty()) {
                 val context = itemView.context
                 val iconId = context.resources.getIdentifier(
-                    "weather_icons/set01/small/${item.imageURL}",
+                    "w${item.imageURL}",
                     "drawable",
                     context.packageName
                 )

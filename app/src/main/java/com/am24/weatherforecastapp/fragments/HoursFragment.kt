@@ -71,7 +71,8 @@ class HoursFragment : Fragment() {
             val hourObj = hoursArr.getJSONObject(i)
             val item = WeatherModel(
                 weatherItem.city,
-                hourObj.getString("date").split("T").last().substring(0, 5),
+                hourObj.getString("date").split("T").first().substring(0, 10)
+                        + " " + hourObj.getString("date").split("T").last().substring(0, 5),
                 hourObj.getString("summary"),
                 hourObj.getDouble("temperature").toInt().toString() + "°C",
                 "",
