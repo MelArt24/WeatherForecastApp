@@ -12,7 +12,6 @@ import com.am24.weatherforecastapp.adapters.WeatherAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentHoursBinding
 import org.json.JSONArray
-import org.json.JSONObject
 
 /**
  * Фрагмент для відображення погоди по годинах.
@@ -69,14 +68,15 @@ class HoursFragment : Fragment() {
         val list = ArrayList<WeatherModel>()
 
         for(i in 0 until hoursArr.length()) {
+            val hourObj = hoursArr.getJSONObject(i)
             val item = WeatherModel(
                 weatherItem.city,
-                (hoursArr[i] as JSONObject).getString("time"),
-                (hoursArr[i] as JSONObject).getJSONObject("condition").getString("text"),
-                (hoursArr[i] as JSONObject).getString("temp_c").toFloat().toInt().toString()  + "°C",
+                hourObj.getString("date").split("T").last().substring(0, 5),
+                hourObj.getString("summary"),
+                hourObj.getDouble("temperature").toInt().toString() + "°C",
                 "",
                 "",
-                (hoursArr[i] as JSONObject).getJSONObject("condition").getString("icon"),
+                hourObj.getString("icon"),
                 ""
             )
             list.add(item)

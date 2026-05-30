@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.databinding.ListItemBinding
-import com.squareup.picasso.Picasso
 
 /**
  * Адаптер для відображення списку погоди (години або дні) у RecyclerView.
@@ -47,8 +46,18 @@ class WeatherAdapter(private val listener: Listener?) : ListAdapter<WeatherModel
                 "${item.maximumTemperature}°C / ${item.minimumTemperature}°C"
             }
 
-            // Завантажуємо іконку погоди з інтернету за допомогою Picasso
-            Picasso.get().load("https:" + item.imageURL).into(iv)
+            // Завантажуємо іконку погоди з локальних ресурсів
+            if (item.imageURL.isNotEmpty()) {
+                val context = itemView.context
+                val iconId = context.resources.getIdentifier(
+                    "weather_icons/set01/small/${item.imageURL}",
+                    "drawable",
+                    context.packageName
+                )
+                if (iconId != 0) {
+                    iv.setImageResource(iconId)
+                }
+            }
         }
     }
 

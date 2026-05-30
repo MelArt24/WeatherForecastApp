@@ -32,7 +32,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.tabs.TabLayoutMediator
-import com.squareup.picasso.Picasso
 import org.json.JSONObject
 import java.util.Locale
 import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
@@ -141,11 +140,10 @@ class MainFragment(
             DialogManager.citySearchDialog(requireContext(), object : DialogManager.Listener{
                 override fun onClick(name: String?) {
                     if (name != null) {
-                        requestWeatherData(name)
+                        requestWeatherData(city = name)
                     }
                 }
             })
-
         }
     }
 
@@ -201,9 +199,9 @@ class MainFragment(
                 .addOnCompleteListener { task ->
                     val location = task.result
                     if (location != null) {
-                        val lat = location.latitude
-                        val lon = location.longitude
-                        requestWeatherData("$lat, $lon")
+                        val lat = location.latitude.toString()
+                        val lon = location.longitude.toString()
+                        requestWeatherData(lon, lat)
                     } else {
                         Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
                     }
@@ -227,7 +225,15 @@ class MainFragment(
             tvCity.text = it.city
             tvCondition.text = it.condition
             tvMaxMinTemperature.text = if(it.currentTemperature.isEmpty()) "" else maxMinTemperature
-            Picasso.get().load("https:" + it.imageURL).into(ivWeather)
+
+            val iconId = resources.getIdentifier(
+                "weather_icons/set01/big/${it.imageURL}",
+                "drawable",
+                requireContext().packageName
+            )
+            if (iconId != 0) {
+                ivWeather.setImageResource(iconId)
+            }
         }
     }
 
@@ -244,31 +250,42 @@ class MainFragment(
     /**
      * Запит до Weather API через Volley
      */
-    fun requestWeatherData(city: String, isTransliterated: Boolean = false) {
-        val isUkrainian = Locale.getDefault().language == "uk"
-        val langParam = if (isUkrainian) "&lang=uk" else ""
+    fun requestWeatherData(lon: String? = null, lat: String? = null, city: String? = null, isTransliterated: Boolean = false) {
+//        val isUkrainian = Locale.getDefault().language == "uk"
+//        val langParam = if (isUkrainian) "&lang=uk" else ""
+        var url = ""
 
-        val url = "https://api.weatherapi.com/v1/forecast.json?key=" +
-                WEATHER_API_KEY +
-                "&q=" +
-                city +
-                "&days=" +
-                "3" +
-                "&aqi=no&alerts=no" +
-                langParam
+        if(lat != null && lon != null) {
+            url = "https://www.meteosource.com/api/v1/free/point?" +
+                    "lat=" + lat +
+                    "&lon=" + lon +
+                    "&sections=all&timezone=UTC" +
+                    "&language=" +
+                    "en" +
+                    "&units=metric&key=" +
+                    WEATHER_API_KEY
+        } else {
+            url = "https://www.meteosource.com/api/v1/free/point?" +
+                    "place_id=" + city +
+                    "&sections=all&timezone=UTC" +
+                    "&language=" +
+                    "en" +
+                    "&units=metric&key=" +
+                    WEATHER_API_KEY
+        }
 
         val queue = volleyProvider.getQueue(requireContext())
 
         val request = object : StringRequest(
             Method.GET, url,
             { result ->
-                parseWeatherData(result)
+                parseWeatherData(result, city)
             },
             { error ->
                 // Якщо місто не знайдено кирилицею, пробуємо транслітерацію
                 if (!isTransliterated && error.networkResponse?.statusCode == 400) {
-                    val transliteratedCity = TransliterationUtils.transliterate(city)
-                    requestWeatherData(transliteratedCity, true)
+                    val transliteratedCity = TransliterationUtils.transliterate(city.toString())
+                    requestWeatherData(city = transliteratedCity, isTransliterated = true)
                 } else {
                     Toast.makeText(requireContext(), getString(R.string.city_not_found), Toast.LENGTH_SHORT).show()
                 }
@@ -288,11 +305,11 @@ class MainFragment(
     }
 
     /**
-     * Розбирає JSON-відповідь на "зараз" та "прогноз на 3 дні"
+     * Розбирає JSON-відповідь на "зараз" та "прогноз на 7 днів"
      */
-    private fun parseWeatherData(result: String) {
+    private fun parseWeatherData(result: String, city: String?) {
         val mainObject = JSONObject(result)
-        val list = parseDays(mainObject)
+        val list = parseDays(mainObject, city)
         parseCurrentData(mainObject, list[0])
     }
 
@@ -300,25 +317,25 @@ class MainFragment(
      * Розбирає JSON-відповідь для отримання прогнозу на кілька днів.
      * Повертає список моделей WeatherModel і записує їх у ViewModel (dataList).
      */
-    private fun parseDays(mainObject: JSONObject): List<WeatherModel> {
+    private fun parseDays(mainObject: JSONObject, city: String?): List<WeatherModel> {
         val list = ArrayList<WeatherModel>()
-        val daysArray = mainObject.getJSONObject("forecast").getJSONArray("forecastday")
+        val daily = mainObject.getJSONObject("daily")
+        val daysArray = daily.getJSONArray("data")
 
-        val name = mainObject.getJSONObject("location").getString("name")
+        val name = city ?: getString(R.string.your_city)
 
         for (i in 0 until daysArray.length()) {
             val day = daysArray[i] as JSONObject
+            val allDay = day.getJSONObject("all_day")
             val item = WeatherModel(
                 name,
-                day.getString("date"),
-                day.getJSONObject("day").getJSONObject("condition")
-                    .getString("text"),
+                day.getString("day"),
+                day.getString("summary"),
                 "",
-                day.getJSONObject("day").getString("maxtemp_c").toFloat().toInt().toString(),
-                day.getJSONObject("day").getString("mintemp_c").toFloat().toInt().toString(),
-                day.getJSONObject("day").getJSONObject("condition")
-                    .getString("icon"),
-                day.getJSONArray("hour").toString()
+                allDay.getDouble("temperature_max").toInt().toString(),
+                allDay.getDouble("temperature_min").toInt().toString(),
+                day.getString("icon"),
+                mainObject.getJSONObject("hourly").getJSONArray("data").toString()
             )
             list.add(item)
         }
@@ -331,16 +348,15 @@ class MainFragment(
      * Бере дані з розділу "current" і об'єднує їх з макс/мін температурою з першого дня прогнозу.
      */
     private fun parseCurrentData(mainObject: JSONObject, weatherItem: WeatherModel) {
+        val current = mainObject.getJSONObject("current")
         val item = WeatherModel(
-            mainObject.getJSONObject("location").getString("name"),
-            mainObject.getJSONObject("current").getString("last_updated"),
-            mainObject.getJSONObject("current").getJSONObject("condition")
-                .getString("text"),
-            mainObject.getJSONObject("current").getString("temp_c").toFloat().toInt().toString()  + "°C",
+            weatherItem.city,
+            "Now",
+            current.getString("summary"),
+            current.getDouble("temperature").toInt().toString() + "°C",
             weatherItem.maximumTemperature,
             weatherItem.minimumTemperature,
-            mainObject.getJSONObject("current").getJSONObject("condition")
-                .getString("icon"),
+            current.getString("icon_num"),
             weatherItem.hours
         )
         model.dataCurrent.value = item
