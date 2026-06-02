@@ -9,6 +9,9 @@ import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
 import com.am24.weatherforecastapp.data.remote.HourlyData
 import com.am24.weatherforecastapp.data.remote.WeatherResponse
 import com.am24.weatherforecastapp.utils.TransliterationUtils
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -63,6 +66,27 @@ class MainViewModel : ViewModel() {
             } catch (e: Exception) {
                 _errorFlow.emit(R.string.location_error)
             }
+        }
+    }
+
+    fun getLocation(fLocalProviderClient: FusedLocationProviderClient) {
+        val cancellationToken = CancellationTokenSource()
+        try {
+            fLocalProviderClient
+                .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
+                .addOnCompleteListener { task ->
+                    val location = task.result
+                    if (location != null) {
+                        requestWeatherData(lat = location.latitude.toString(), lon = location.longitude.toString())
+                    } else {
+                        viewModelScope.launch { _errorFlow.emit(R.string.location_error) }
+                    }
+                }
+                .addOnFailureListener {
+                    viewModelScope.launch { _errorFlow.emit(R.string.location_error) }
+                }
+        } catch (e: SecurityException) {
+            viewModelScope.launch { _errorFlow.emit(R.string.location_permission_denied) }
         }
     }
 
