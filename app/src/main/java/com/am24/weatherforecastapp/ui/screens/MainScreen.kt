@@ -18,14 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
@@ -35,10 +32,8 @@ import com.am24.weatherforecastapp.ui.WeatherIconHelper
 import com.am24.weatherforecastapp.ui.theme.Black
 import com.am24.weatherforecastapp.ui.theme.BlueBg
 import com.google.android.gms.location.FusedLocationProviderClient
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-import org.json.JSONObject
 
 @Composable
 fun MainScreen(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProviderClient) {

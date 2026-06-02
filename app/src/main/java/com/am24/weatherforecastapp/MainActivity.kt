@@ -14,7 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
-import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.ui.WeatherApp
 import com.am24.weatherforecastapp.ui.theme.WeatherForecastAppTheme
 import com.google.android.gms.location.LocationServices
