@@ -1,6 +1,5 @@
 package com.am24.weatherforecastapp
 
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.am24.weatherforecastapp.adapters.WeatherModel
@@ -10,6 +9,12 @@ import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
 import com.am24.weatherforecastapp.data.remote.HourlyData
 import com.am24.weatherforecastapp.data.remote.WeatherResponse
 import com.am24.weatherforecastapp.utils.TransliterationUtils
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import retrofit2.HttpException
 
@@ -19,22 +24,18 @@ import retrofit2.HttpException
  */
 class MainViewModel : ViewModel() {
 
-    /**
-     * LiveData, що зберігає один об'єкт погоди (поточний обраний день або година).
-     * На ці дані підписаний MainFragment (для картки) та HoursFragment (для списку годин).
-     */
-    val dataCurrent = MutableLiveData<WeatherModel>()
+    private val _dataCurrent = MutableStateFlow<WeatherModel?>(null)
+    val dataCurrent: StateFlow<WeatherModel?> = _dataCurrent.asStateFlow()
 
-    /**
-     * LiveData, що зберігає СПИСОК об'єктів погоди (прогноз на кілька днів).
-     * На ці дані підписаний DaysFragment.
-     */
-    val dataList = MutableLiveData<List<WeatherModel>>()
+    private val _dataList = MutableStateFlow<List<WeatherModel>>(emptyList())
+    val dataList: StateFlow<List<WeatherModel>> = _dataList.asStateFlow()
 
-    /**
-     * LiveData для передачі повідомлень про помилки у фрагмент.
-     */
-    val errorLiveData = MutableLiveData<Int?>()
+    private val _errorFlow = MutableSharedFlow<Int?>()
+    val errorFlow: SharedFlow<Int?> = _errorFlow.asSharedFlow()
+
+    fun setSelectedDay(item: WeatherModel) {
+        _dataCurrent.value = item
+    }
 
     fun requestWeatherData(
         lat: String? = null,
@@ -51,16 +52,16 @@ class MainViewModel : ViewModel() {
                     apiKey = WEATHER_API_KEY
                 )
                 parseWeatherData(response, city)
-                errorLiveData.value = null
+                _errorFlow.emit(null)
             } catch (e: HttpException) {
                 if (!isTransliterated && e.code() == 400 && city != null) {
                     val transliteratedCity = TransliterationUtils.transliterate(city)
                     requestWeatherData(city = transliteratedCity, isTransliterated = true)
                 } else {
-                    errorLiveData.value = R.string.city_not_found
+                    _errorFlow.emit(R.string.city_not_found)
                 }
             } catch (e: Exception) {
-                errorLiveData.value = R.string.location_error
+                _errorFlow.emit(R.string.location_error)
             }
         }
     }
@@ -82,7 +83,7 @@ class MainViewModel : ViewModel() {
             )
             list.add(item)
         }
-        dataList.value = list
+        _dataList.value = list
 
         if (list.isNotEmpty()) {
             val currentItem = WeatherModel(
@@ -95,7 +96,7 @@ class MainViewModel : ViewModel() {
                 response.current.iconNum.toString(),
                 list[0].hours
             )
-            dataCurrent.value = currentItem
+            _dataCurrent.value = currentItem
         }
     }
 

@@ -17,25 +17,21 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.R
-import com.am24.weatherforecastapp.VolleyProvider
 import com.am24.weatherforecastapp.adapters.ViewPageAdapter
-import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentMainBinding
-import com.android.volley.Response
-import com.android.volley.toolbox.StringRequest
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.tabs.TabLayoutMediator
-import org.json.JSONObject
-import java.util.Locale
-import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
-import com.am24.weatherforecastapp.utils.TransliterationUtils
+import kotlinx.coroutines.launch
 
 /**
  * Головний екран додатка.
@@ -109,10 +105,13 @@ class MainFragment : Fragment() {
     }
 
     private fun observeErrors() {
-        model.errorLiveData.observe(viewLifecycleOwner) { errorResId ->
-            errorResId?.let {
-                Toast.makeText(requireContext(), getString(it), Toast.LENGTH_SHORT).show()
-                model.errorLiveData.value = null // Скидаємо помилку
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.errorFlow.collect { errorResId ->
+                    errorResId?.let {
+                        Toast.makeText(requireContext(), getString(it), Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }
@@ -226,21 +225,27 @@ class MainFragment : Fragment() {
      * Спостерігає за dataCurrent у ViewModel і оновлює верхню картку на екрані
      */
     private fun updateCard() = with(binding) {
-        model.dataCurrent.observe(viewLifecycleOwner) {
-            val maxMinTemperature = "${it.maximumTemperature}°C / ${it.minimumTemperature}°C"
-            tvDate.text = it.time
-            tvCurrentTemperature.text = it.currentTemperature.ifEmpty { maxMinTemperature }
-            tvCity.text = it.city
-            tvCondition.text = it.condition
-            tvMaxMinTemperature.text = if(it.currentTemperature.isEmpty()) "" else maxMinTemperature
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.dataCurrent.collect { weather ->
+                    weather?.let {
+                        val maxMinTemperature = "${it.maximumTemperature}°C / ${it.minimumTemperature}°C"
+                        tvDate.text = it.time
+                        tvCurrentTemperature.text = it.currentTemperature.ifEmpty { maxMinTemperature }
+                        tvCity.text = it.city
+                        tvCondition.text = it.condition
+                        tvMaxMinTemperature.text = if(it.currentTemperature.isEmpty()) "" else maxMinTemperature
 
-            val iconId = resources.getIdentifier(
-                "weather_icons/set01/big/${it.imageURL}",
-                "drawable",
-                requireContext().packageName
-            )
-            if (iconId != 0) {
-                ivWeather.setImageResource(iconId)
+                        val iconId = resources.getIdentifier(
+                            "w${it.imageURL}",
+                            "drawable",
+                            requireContext().packageName
+                        )
+                        if (iconId != 0) {
+                            ivWeather.setImageResource(iconId)
+                        }
+                    }
+                }
             }
         }
     }

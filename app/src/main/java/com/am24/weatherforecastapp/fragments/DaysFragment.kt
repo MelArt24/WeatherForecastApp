@@ -5,12 +5,16 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.adapters.WeatherAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentDaysBinding
+import kotlinx.coroutines.launch
 
 /**
  * Фрагмент, що відображає список прогнозів погоди на кілька днів.
@@ -55,8 +59,12 @@ class DaysFragment : Fragment(), WeatherAdapter.Listener {
          * Як тільки у ViewModel оновляться дані,
          * адаптер автоматично оновить список на екрані.
          */
-        model.dataList.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.dataList.collect {
+                    adapter.submitList(it)
+                }
+            }
         }
     }
 
@@ -83,6 +91,6 @@ class DaysFragment : Fragment(), WeatherAdapter.Listener {
      * щоб головний екран (MainFragment) зміг показати деталі цього дня.
      */
     override fun onClick(item: WeatherModel) {
-        model.dataCurrent.value = item
+        model.setSelectedDay(item)
     }
 }

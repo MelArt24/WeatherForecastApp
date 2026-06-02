@@ -5,12 +5,16 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.adapters.WeatherAdapter
 import com.am24.weatherforecastapp.adapters.WeatherModel
 import com.am24.weatherforecastapp.databinding.FragmentHoursBinding
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 /**
@@ -42,9 +46,14 @@ class HoursFragment : Fragment() {
          * Коли користувач обирає день у DaysFragment, дані тут оновлюються,
          * і ми перемальовуємо години саме для цього дня.
          */
-        model.dataCurrent.observe(viewLifecycleOwner) {
-            // Передаємо в адаптер список, який ми витягли з JSON-рядка
-            adapter.submitList(getHoursList(it))
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.dataCurrent.collect { weather ->
+                    weather?.let {
+                        adapter.submitList(getHoursList(it))
+                    }
+                }
+            }
         }
     }
 
