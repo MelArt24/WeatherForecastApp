@@ -41,9 +41,7 @@ import com.am24.weatherforecastapp.utils.TransliterationUtils
  * Головний екран додатка.
  * Керує геолокацією, запитами до мережі та відображенням основної картки погоди.
  */
-class MainFragment(
-    private val volleyProvider: VolleyProvider = VolleyProvider()
-) : Fragment() {
+class MainFragment : Fragment() {
 
     // Клієнт для отримання координат користувача
     private lateinit var fLocalProviderClient: FusedLocationProviderClient
@@ -106,7 +104,17 @@ class MainFragment(
         )
         init()
         updateCard()
+        observeErrors()
         getLocation()
+    }
+
+    private fun observeErrors() {
+        model.errorLiveData.observe(viewLifecycleOwner) { errorResId ->
+            errorResId?.let {
+                Toast.makeText(requireContext(), getString(it), Toast.LENGTH_SHORT).show()
+                model.errorLiveData.value = null // Скидаємо помилку
+            }
+        }
     }
 
     override fun onResume() {
@@ -140,7 +148,7 @@ class MainFragment(
             DialogManager.citySearchDialog(requireContext(), object : DialogManager.Listener{
                 override fun onClick(name: String?) {
                     if (name != null) {
-                        requestWeatherData(city = name)
+                        model.requestWeatherData(city = name)
                     }
                 }
             })
@@ -201,7 +209,7 @@ class MainFragment(
                     if (location != null) {
                         val lat = location.latitude.toString()
                         val lon = location.longitude.toString()
-                        requestWeatherData(lon, lat)
+                        model.requestWeatherData(lat = lat, lon = lon)
                     } else {
                         Toast.makeText(requireContext(), getString(R.string.location_error), Toast.LENGTH_SHORT).show()
                     }
@@ -245,121 +253,6 @@ class MainFragment(
         if(!isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)) {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-    }
-
-    /**
-     * Запит до Weather API через Volley
-     */
-    fun requestWeatherData(lon: String? = null, lat: String? = null, city: String? = null, isTransliterated: Boolean = false) {
-//        val isUkrainian = Locale.getDefault().language == "uk"
-//        val langParam = if (isUkrainian) "&lang=uk" else ""
-        var url = ""
-
-        if(lat != null && lon != null) {
-            url = "https://www.meteosource.com/api/v1/free/point?" +
-                    "lat=" + lat +
-                    "&lon=" + lon +
-                    "&sections=all&timezone=UTC" +
-                    "&language=" +
-                    "en" +
-                    "&units=metric&key=" +
-                    WEATHER_API_KEY
-        } else {
-            url = "https://www.meteosource.com/api/v1/free/point?" +
-                    "place_id=" + city +
-                    "&sections=all&timezone=UTC" +
-                    "&language=" +
-                    "en" +
-                    "&units=metric&key=" +
-                    WEATHER_API_KEY
-        }
-
-        val queue = volleyProvider.getQueue(requireContext())
-
-        val request = object : StringRequest(
-            Method.GET, url,
-            { result ->
-                parseWeatherData(result, city)
-            },
-            { error ->
-                // Якщо місто не знайдено кирилицею, пробуємо транслітерацію
-                if (!isTransliterated && error.networkResponse?.statusCode == 400) {
-                    val transliteratedCity = TransliterationUtils.transliterate(city.toString())
-                    requestWeatherData(city = transliteratedCity, isTransliterated = true)
-                } else {
-                    Toast.makeText(requireContext(), getString(R.string.city_not_found), Toast.LENGTH_SHORT).show()
-                }
-            }
-        ) {
-            // Примусово встановлюємо UTF-8 для коректного відображення кирилиці
-            override fun parseNetworkResponse(response: com.android.volley.NetworkResponse): Response<String> {
-                return try {
-                    val utf8String = String(response.data, Charsets.UTF_8)
-                    Response.success(utf8String, com.android.volley.toolbox.HttpHeaderParser.parseCacheHeaders(response))
-                } catch (e: Exception) {
-                    Response.error(com.android.volley.ParseError(e))
-                }
-            }
-        }
-        queue.add(request)
-    }
-
-    /**
-     * Розбирає JSON-відповідь на "зараз" та "прогноз на 7 днів"
-     */
-    private fun parseWeatherData(result: String, city: String?) {
-        val mainObject = JSONObject(result)
-        val list = parseDays(mainObject, city)
-        parseCurrentData(mainObject, list[0])
-    }
-
-    /**
-     * Розбирає JSON-відповідь для отримання прогнозу на кілька днів.
-     * Повертає список моделей WeatherModel і записує їх у ViewModel (dataList).
-     */
-    private fun parseDays(mainObject: JSONObject, city: String?): List<WeatherModel> {
-        val list = ArrayList<WeatherModel>()
-        val daily = mainObject.getJSONObject("daily")
-        val daysArray = daily.getJSONArray("data")
-
-        val name = city ?: getString(R.string.your_city)
-
-        for (i in 0 until daysArray.length()) {
-            val day = daysArray[i] as JSONObject
-            val allDay = day.getJSONObject("all_day")
-            val item = WeatherModel(
-                name,
-                day.getString("day"),
-                day.getString("summary"),
-                "",
-                allDay.getDouble("temperature_max").toInt().toString(),
-                allDay.getDouble("temperature_min").toInt().toString(),
-                day.getString("icon"),
-                mainObject.getJSONObject("hourly").getJSONArray("data").toString()
-            )
-            list.add(item)
-        }
-        model.dataList.value = list
-        return list
-    }
-
-    /**
-     * Створює фінальний об'єкт "поточної погоди" для головної картки.
-     * Бере дані з розділу "current" і об'єднує їх з макс/мін температурою з першого дня прогнозу.
-     */
-    private fun parseCurrentData(mainObject: JSONObject, weatherItem: WeatherModel) {
-        val current = mainObject.getJSONObject("current")
-        val item = WeatherModel(
-            weatherItem.city,
-            "Now",
-            current.getString("summary"),
-            current.getDouble("temperature").toInt().toString() + "°C",
-            weatherItem.maximumTemperature,
-            weatherItem.minimumTemperature,
-            current.getString("icon_num"),
-            weatherItem.hours
-        )
-        model.dataCurrent.value = item
     }
 
     companion object {

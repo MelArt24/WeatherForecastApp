@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 val localProperties = Properties().apply {
@@ -74,6 +75,12 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.junit.ktx)
     implementation(libs.androidx.uiautomator)
+
+    // Networking
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.serialization)
+    implementation(libs.okhttp.logging)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
