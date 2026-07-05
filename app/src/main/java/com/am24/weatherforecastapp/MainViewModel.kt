@@ -3,11 +3,10 @@ package com.am24.weatherforecastapp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.am24.weatherforecastapp.adapters.WeatherModel
-import com.am24.weatherforecastapp.data.remote.RetrofitClient
 import kotlinx.coroutines.launch
-import com.am24.weatherforecastapp.BuildConfig.WEATHER_API_KEY
 import com.am24.weatherforecastapp.data.remote.HourlyData
 import com.am24.weatherforecastapp.data.remote.WeatherResponse
+import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import com.am24.weatherforecastapp.utils.TransliterationUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
@@ -25,7 +24,9 @@ import retrofit2.HttpException
  * ViewModel — це "спільна пам'ять" для всіх фрагментів додатка.
  * Вона виживає при повороті екрана та зміні конфігурації.
  */
-class MainViewModel : ViewModel() {
+class MainViewModel(
+    private val weatherRepository: WeatherRepository
+) : ViewModel() {
 
     private val _dataCurrent = MutableStateFlow<WeatherModel?>(null)
     val dataCurrent: StateFlow<WeatherModel?> = _dataCurrent.asStateFlow()
@@ -48,11 +49,10 @@ class MainViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.weatherApiService.getWeatherData(
+                val response = weatherRepository.getWeatherData(
                     lat = lat,
                     lon = lon,
-                    placeId = city,
-                    apiKey = WEATHER_API_KEY
+                    city = city,
                 )
                 parseWeatherData(response, city)
                 _errorFlow.emit(null)

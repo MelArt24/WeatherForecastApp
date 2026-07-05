@@ -13,10 +13,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModelProvider
 import com.am24.weatherforecastapp.ui.WeatherApp
 import com.am24.weatherforecastapp.ui.theme.WeatherForecastAppTheme
 import com.google.android.gms.location.LocationServices
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Головна точка входу в додаток.
@@ -24,7 +24,7 @@ import com.google.android.gms.location.LocationServices
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        val viewModel: MainViewModel by viewModel()
         val fLocalProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         setContent {

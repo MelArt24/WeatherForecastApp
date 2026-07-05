@@ -75,6 +75,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
 
+    // Koin
+    implementation("io.insert-koin:koin-android:3.5.6")
+
     // Networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.serialization)
@@ -98,6 +101,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.json:json:20240303")
     androidTestImplementation (libs.core.ktx)
     androidTestImplementation(libs.androidx.junit)
 }
