@@ -69,17 +69,11 @@ android {
 
 dependencies {
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.volley)
-    implementation(libs.picasso)
-    implementation(libs.androidx.fragment)
     implementation(libs.play.services.location)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.junit.ktx)
-    implementation(libs.androidx.uiautomator)
 
     // Networking
     implementation(libs.retrofit)
@@ -101,22 +95,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
 
-    // DI - Koin
-    implementation(libs.koin.android)
-    implementation(libs.koin.compose)
-
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
-    testImplementation(libs.mockk)
-    testImplementation(libs.truth)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.junit.jupiter)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation (libs.mockk.android)
     androidTestImplementation (libs.core.ktx)
-    androidTestImplementation (libs.androidx.rules)
-    debugImplementation(libs.androidx.fragment.testing.manifest)
-    androidTestImplementation(libs.androidx.fragment.testing)
+    androidTestImplementation(libs.androidx.junit)
 }
