@@ -4,19 +4,19 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class WeatherResponse(
+data class WeatherResponseDto(
     @SerialName("lat") val lat: String,
     @SerialName("lon") val lon: String,
     @SerialName("timezone") val timezone: String,
     @SerialName("units") val units: String,
-    @SerialName("current") val current: CurrentWeather,
-    @SerialName("hourly") val hourly: HourlyForecast,
-    @SerialName("daily") val daily: DailyForecast,
+    @SerialName("current") val current: CurrentWeatherDto,
+    @SerialName("hourly") val hourly: HourlyForecastDto,
+    @SerialName("daily") val daily: DailyForecastDto,
     @SerialName("place_id") val placeId: String? = null
 )
 
 @Serializable
-data class CurrentWeather(
+data class CurrentWeatherDto(
     @SerialName("icon") val icon: String,
     @SerialName("icon_num") val iconNum: Int,
     @SerialName("summary") val summary: String,
@@ -24,12 +24,12 @@ data class CurrentWeather(
 )
 
 @Serializable
-data class HourlyForecast(
-    @SerialName("data") val data: List<HourlyData>
+data class HourlyForecastDto(
+    @SerialName("data") val data: List<HourlyDataDto>
 )
 
 @Serializable
-data class HourlyData(
+data class HourlyDataDto(
     @SerialName("date") val date: String,
     @SerialName("weather") val weather: String,
     @SerialName("icon") val icon: Int,
@@ -38,21 +38,21 @@ data class HourlyData(
 )
 
 @Serializable
-data class DailyForecast(
-    @SerialName("data") val data: List<DailyData>
+data class DailyForecastDto(
+    @SerialName("data") val data: List<DailyDataDto>
 )
 
 @Serializable
-data class DailyData(
+data class DailyDataDto(
     @SerialName("day") val day: String,
     @SerialName("weather") val weather: String,
     @SerialName("icon") val icon: Int,
     @SerialName("summary") val summary: String,
-    @SerialName("all_day") val allDay: AllDayData
+    @SerialName("all_day") val allDay: AllDayDataDto
 )
 
 @Serializable
-data class AllDayData(
+data class AllDayDataDto(
     @SerialName("weather") val weather: String,
     @SerialName("icon") val icon: Int,
     @SerialName("temperature") val temperature: Double? = null,

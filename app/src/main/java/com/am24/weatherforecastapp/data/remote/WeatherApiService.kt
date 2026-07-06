@@ -14,5 +14,5 @@ interface WeatherApiService {
         @Query("language") language: String = "en",
         @Query("units") units: String = "metric",
         @Query("key") apiKey: String
-    ): WeatherResponse
+    ): WeatherResponseDto
 }

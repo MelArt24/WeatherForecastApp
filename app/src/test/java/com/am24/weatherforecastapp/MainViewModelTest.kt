@@ -1,12 +1,9 @@
 package com.am24.weatherforecastapp
 
-import com.am24.weatherforecastapp.data.remote.AllDayData
-import com.am24.weatherforecastapp.data.remote.CurrentWeather
-import com.am24.weatherforecastapp.data.remote.DailyData
-import com.am24.weatherforecastapp.data.remote.DailyForecast
-import com.am24.weatherforecastapp.data.remote.HourlyData
-import com.am24.weatherforecastapp.data.remote.HourlyForecast
-import com.am24.weatherforecastapp.data.remote.WeatherResponse
+import com.am24.weatherforecastapp.domain.model.CurrentWeather
+import com.am24.weatherforecastapp.domain.model.HourlyWeather
+import com.am24.weatherforecastapp.domain.model.DailyWeather
+import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,7 +33,7 @@ class MainViewModelTest {
 
     @Test
     fun requestWeatherData_usesRepositoryAndUpdatesWeatherState() = runTest(testDispatcher) {
-        val repository = FakeWeatherRepository(successResponse())
+        val repository = FakeWeatherRepository(successForecast())
         val viewModel = MainViewModel(repository)
 
         viewModel.requestWeatherData(city = "Kyiv")
@@ -52,7 +49,7 @@ class MainViewModelTest {
     }
 
     private class FakeWeatherRepository(
-        private val response: WeatherResponse
+        private val response: WeatherForecast
     ) : WeatherRepository {
         var lastCity: String? = null
             private set
@@ -61,50 +58,34 @@ class MainViewModelTest {
             lat: String?,
             lon: String?,
             city: String?
-        ): WeatherResponse {
+        ): WeatherForecast {
             lastCity = city
             return response
         }
     }
 
-    private fun successResponse() = WeatherResponse(
-        lat = "50.45",
-        lon = "30.52",
-        timezone = "UTC",
-        units = "metric",
-        placeId = "Kyiv",
+    private fun successForecast() = WeatherForecast(
+        cityName = "Kyiv",
         current = CurrentWeather(
-            icon = "clear",
-            iconNum = 1,
             summary = "Clear",
-            temperature = 21.4
+            temperature = 21.4,
+            iconCode = 1
         ),
-        hourly = HourlyForecast(
-            data = listOf(
-                HourlyData(
-                    date = "2026-07-05T12:00:00",
-                    weather = "clear",
-                    icon = 1,
-                    summary = "Clear",
-                    temperature = 21.4
-                )
+        hourly = listOf(
+            HourlyWeather(
+                date = "2026-07-05T12:00:00",
+                summary = "Clear",
+                temperature = 21.4,
+                iconCode = 1
             )
         ),
-        daily = DailyForecast(
-            data = listOf(
-                DailyData(
-                    day = "2026-07-05",
-                    weather = "clear",
-                    icon = 1,
-                    summary = "Clear",
-                    allDay = AllDayData(
-                        weather = "clear",
-                        icon = 1,
-                        temperature = 20.0,
-                        temperatureMin = 18.0,
-                        temperatureMax = 24.0
-                    )
-                )
+        daily = listOf(
+            DailyWeather(
+                day = "2026-07-05",
+                summary = "Clear",
+                iconCode = 1,
+                temperatureMin = 18.0,
+                temperatureMax = 24.0
             )
         )
     )

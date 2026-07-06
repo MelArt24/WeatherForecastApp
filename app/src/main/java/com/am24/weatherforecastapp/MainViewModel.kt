@@ -1,11 +1,11 @@
 package com.am24.weatherforecastapp
 
+import com.am24.weatherforecastapp.domain.model.HourlyWeather
+import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.am24.weatherforecastapp.adapters.WeatherModel
+import com.am24.weatherforecastapp.ui.model.WeatherModel
 import kotlinx.coroutines.launch
-import com.am24.weatherforecastapp.data.remote.HourlyData
-import com.am24.weatherforecastapp.data.remote.WeatherResponse
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import com.am24.weatherforecastapp.utils.TransliterationUtils
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -90,20 +90,20 @@ class MainViewModel(
         }
     }
 
-    private fun parseWeatherData(response: WeatherResponse, city: String?) {
-        val cityName = city ?: response.placeId ?: "Your city"
+    private fun parseWeatherData(response: WeatherForecast, city: String?) {
+        val cityName = city ?: response.cityName ?: "Your city"
         val list = ArrayList<WeatherModel>()
 
-        response.daily.data.forEach { day ->
+        response.daily.forEach { day ->
             val item = WeatherModel(
-                cityName,
-                day.day,
-                day.summary,
-                "",
-                day.allDay.temperatureMax.toInt().toString(),
-                day.allDay.temperatureMin.toInt().toString(),
-                day.icon.toString(),
-                createHourlyJson(response.hourly.data)
+                city = cityName,
+                time = day.day,
+                condition = day.summary,
+                currentTemperature = "",
+                minimumTemperature = day.temperatureMin.toInt().toString(),
+                maximumTemperature = day.temperatureMax.toInt().toString(),
+                imageURL = day.iconCode.toString(),
+                hours = createHourlyJson(response.hourly)
             )
             list.add(item)
         }
@@ -111,27 +111,27 @@ class MainViewModel(
 
         if (list.isNotEmpty()) {
             val currentItem = WeatherModel(
-                cityName,
-                "Now",
-                response.current.summary,
-                response.current.temperature.toInt().toString() + "°C",
-                list[0].maximumTemperature,
-                list[0].minimumTemperature,
-                response.current.iconNum.toString(),
-                list[0].hours
+                city = cityName,
+                time = "Now",
+                condition = response.current.summary,
+                currentTemperature = response.current.temperature.toInt().toString() + "°C",
+                minimumTemperature = list[0].minimumTemperature,
+                maximumTemperature = list[0].maximumTemperature,
+                imageURL = response.current.iconCode.toString(),
+                hours = list[0].hours
             )
             _dataCurrent.value = currentItem
         }
     }
 
-    private fun createHourlyJson(hourlyData: List<HourlyData>): String {
+    private fun createHourlyJson(hourlyData: List<HourlyWeather>): String {
         val array = JSONArray()
         hourlyData.forEach { data ->
             val obj = org.json.JSONObject()
             obj.put("date", data.date)
             obj.put("summary", data.summary)
             obj.put("temperature", data.temperature)
-            obj.put("icon", data.icon)
+            obj.put("icon", data.iconCode)
             array.put(obj)
         }
         return array.toString()

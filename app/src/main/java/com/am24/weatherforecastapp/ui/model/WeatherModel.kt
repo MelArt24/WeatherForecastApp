@@ -1,4 +1,4 @@
-package com.am24.weatherforecastapp.adapters
+package com.am24.weatherforecastapp.ui.model
 
 /**
  * Модель даних, яка описує стан погоди.

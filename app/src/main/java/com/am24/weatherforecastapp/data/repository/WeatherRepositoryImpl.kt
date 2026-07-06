@@ -1,7 +1,8 @@
 package com.am24.weatherforecastapp.data.repository
 
+import com.am24.weatherforecastapp.data.mapper.toDomain
+import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.data.remote.WeatherApiService
-import com.am24.weatherforecastapp.data.remote.WeatherResponse
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 
 class WeatherRepositoryImpl(
@@ -12,12 +13,13 @@ class WeatherRepositoryImpl(
         lat: String?,
         lon: String?,
         city: String?
-    ): WeatherResponse {
-        return apiService.getWeatherData(
+    ): WeatherForecast {
+        val response = apiService.getWeatherData(
             lat = lat,
             lon = lon,
             placeId = city,
             apiKey = apiKey
         )
+        return response.toDomain()
     }
 }

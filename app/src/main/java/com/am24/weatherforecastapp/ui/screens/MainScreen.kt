@@ -27,7 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.R
-import com.am24.weatherforecastapp.adapters.WeatherModel
+import com.am24.weatherforecastapp.ui.model.WeatherModel
 import com.am24.weatherforecastapp.ui.WeatherIconHelper
 import com.am24.weatherforecastapp.ui.theme.Black
 import com.am24.weatherforecastapp.ui.theme.BlueBg
