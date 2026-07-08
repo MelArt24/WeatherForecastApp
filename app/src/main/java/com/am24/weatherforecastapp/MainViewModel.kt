@@ -6,7 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import kotlinx.coroutines.launch
-import com.am24.weatherforecastapp.domain.repository.WeatherRepository
+import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
+import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import com.am24.weatherforecastapp.utils.TransliterationUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
@@ -25,7 +26,8 @@ import retrofit2.HttpException
  * Вона виживає при повороті екрана та зміні конфігурації.
  */
 class MainViewModel(
-    private val weatherRepository: WeatherRepository
+    private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
+    private val searchCityWeatherUseCase: SearchCityWeatherUseCase
 ) : ViewModel() {
 
     private val _dataCurrent = MutableStateFlow<WeatherModel?>(null)
@@ -41,25 +43,38 @@ class MainViewModel(
         _dataCurrent.value = item
     }
 
-    fun requestWeatherData(
+    fun requestCurrentLocationWeather(
         lat: String? = null,
-        lon: String? = null,
-        city: String? = null,
+        lon: String? = null
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = getCurrentWeatherUseCase(lat, lon)
+                parseWeatherData(response, null)
+                _errorFlow.emit(null)
+            } catch (e: Exception) {
+                _errorFlow.emit(R.string.location_error)
+            }
+        }
+    }
+
+    fun requestCityWeather(
+        city: String,
         isTransliterated: Boolean = false
     ) {
         viewModelScope.launch {
             try {
-                val response = weatherRepository.getWeatherData(
-                    lat = lat,
-                    lon = lon,
-                    city = city,
-                )
+                val response = searchCityWeatherUseCase(city)
                 parseWeatherData(response, city)
                 _errorFlow.emit(null)
             } catch (e: HttpException) {
-                if (!isTransliterated && e.code() == 400 && city != null) {
+                if (!isTransliterated && e.code() == 400) {
                     val transliteratedCity = TransliterationUtils.transliterate(city)
-                    requestWeatherData(city = transliteratedCity, isTransliterated = true)
+
+                    requestCityWeather(
+                        city = transliteratedCity,
+                        isTransliterated = true
+                    )
                 } else {
                     _errorFlow.emit(R.string.city_not_found)
                 }
@@ -77,7 +92,7 @@ class MainViewModel(
                 .addOnCompleteListener { task ->
                     val location = task.result
                     if (location != null) {
-                        requestWeatherData(lat = location.latitude.toString(), lon = location.longitude.toString())
+                        requestCurrentLocationWeather(lat = location.latitude.toString(), lon = location.longitude.toString())
                     } else {
                         viewModelScope.launch { _errorFlow.emit(R.string.location_error) }
                     }

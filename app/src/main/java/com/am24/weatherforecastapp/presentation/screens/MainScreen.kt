@@ -72,7 +72,7 @@ fun MainScreen(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProv
                 onSearchClick = {
                     DialogManager.citySearchDialog(context, object : DialogManager.Listener {
                         override fun onClick(name: String?) {
-                            name?.let { viewModel.requestWeatherData(city = it) }
+                            name?.let { viewModel.requestCityWeather(city = it) }
                         }
                     })
                 }
