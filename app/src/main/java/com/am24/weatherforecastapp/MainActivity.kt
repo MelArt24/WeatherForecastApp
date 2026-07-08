@@ -13,8 +13,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import com.am24.weatherforecastapp.ui.WeatherApp
-import com.am24.weatherforecastapp.ui.theme.WeatherForecastAppTheme
+import com.am24.weatherforecastapp.presentation.WeatherApp
+import com.am24.weatherforecastapp.presentation.theme.WeatherForecastAppTheme
 import com.google.android.gms.location.LocationServices
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

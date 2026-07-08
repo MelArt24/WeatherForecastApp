@@ -4,7 +4,7 @@ import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.am24.weatherforecastapp.ui.model.WeatherModel
+import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import kotlinx.coroutines.launch
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import com.am24.weatherforecastapp.utils.TransliterationUtils

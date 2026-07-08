@@ -1,4 +1,4 @@
-package com.am24.weatherforecastapp.ui.theme
+package com.am24.weatherforecastapp.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-package com.am24.weatherforecastapp.ui
+package com.am24.weatherforecastapp.presentation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -9,7 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.am24.weatherforecastapp.MainViewModel
-import com.am24.weatherforecastapp.ui.screens.MainScreen
+import com.am24.weatherforecastapp.presentation.screens.MainScreen
 import com.google.android.gms.location.FusedLocationProviderClient
 
 @Composable

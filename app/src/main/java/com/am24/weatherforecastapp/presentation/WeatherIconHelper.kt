@@ -1,4 +1,4 @@
-package com.am24.weatherforecastapp.ui
+package com.am24.weatherforecastapp.presentation
 
 import androidx.annotation.DrawableRes
 import com.am24.weatherforecastapp.R

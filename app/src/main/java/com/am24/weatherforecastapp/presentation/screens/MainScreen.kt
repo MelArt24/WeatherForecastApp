@@ -1,4 +1,4 @@
-package com.am24.weatherforecastapp.ui.screens
+package com.am24.weatherforecastapp.presentation.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -27,10 +27,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.am24.weatherforecastapp.DialogManager
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.R
-import com.am24.weatherforecastapp.ui.model.WeatherModel
-import com.am24.weatherforecastapp.ui.WeatherIconHelper
-import com.am24.weatherforecastapp.ui.theme.Black
-import com.am24.weatherforecastapp.ui.theme.BlueBg
+import com.am24.weatherforecastapp.presentation.model.WeatherModel
+import com.am24.weatherforecastapp.presentation.WeatherIconHelper
+import com.am24.weatherforecastapp.presentation.theme.Black
+import com.am24.weatherforecastapp.presentation.theme.BlueBg
 import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.launch
 import org.json.JSONArray
