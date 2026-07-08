@@ -22,6 +22,8 @@ val appModule = module {
     viewModel {
         MainViewModel(
             getCurrentWeatherUseCase = get(),
-            searchCityWeatherUseCase = get())
+            searchCityWeatherUseCase = get(),
+            mapWeatherForecastToPresentationUseCase = get()
+        )
     }
 }

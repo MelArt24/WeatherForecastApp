@@ -6,6 +6,7 @@ import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
+import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,7 +39,12 @@ class MainViewModelTest {
         val repository = FakeWeatherRepository(successForecast())
         val getCurrentWeatherUseCase = GetCurrentWeatherUseCase(repository)
         val searchCityWeatherUseCase = SearchCityWeatherUseCase(repository)
-        val viewModel = MainViewModel(getCurrentWeatherUseCase, searchCityWeatherUseCase)
+        val mapWeatherForecastToPresentationUseCase = MapWeatherForecastToPresentationUseCase()
+        val viewModel = MainViewModel(
+            getCurrentWeatherUseCase,
+            searchCityWeatherUseCase,
+            mapWeatherForecastToPresentationUseCase
+        )
 
         viewModel.requestCityWeather(city = "Kyiv")
         advanceUntilIdle()
