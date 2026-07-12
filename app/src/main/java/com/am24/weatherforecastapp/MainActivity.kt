@@ -9,7 +9,6 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -63,25 +62,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkLocation(viewModel: MainViewModel) {
-        Log.d("LocationDebug", "Permission granted: ${hasLocationPermission()}")
-        Log.d("LocationDebug", "Provider enabled: ${isLocationEnabled()}")
-
         if (isLocationEnabled()) {
-            Log.d("LocationDebug", "Requesting location from ViewModel")
             viewModel.requestCurrentLocationWeather()
         } else {
-            Log.d("LocationDebug", "Location providers are disabled")
-
-            DialogManager.locationSettingsDialog(
-                this,
-                object : DialogManager.Listener {
-                    override fun onClick(name: String?) {
-                        startActivity(
-                            Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                        )
-                    }
+            DialogManager.locationSettingsDialog(this, object : DialogManager.Listener {
+                override fun onClick(name: String?) {
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 }
-            )
+            })
         }
     }
 

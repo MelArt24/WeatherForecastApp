@@ -2,7 +2,6 @@ package com.am24.weatherforecastapp.data.repository
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import com.am24.weatherforecastapp.domain.model.LocationCoordinates
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import com.google.android.gms.location.LocationServices
@@ -31,31 +30,19 @@ class LocationRepositoryImpl(context: Context) : LocationRepository {
                         cancellationTokenSource.token
                     )
                     .addOnSuccessListener { location ->
-                        Log.d("LocationDebug", "Location result: $location")
-
-                        if (!continuation.isActive) {
-                            return@addOnSuccessListener
-                        }
-
+                        if (!continuation.isActive) return@addOnSuccessListener
                         if (location == null) {
                             continuation.resumeWithException(
                                 IllegalStateException("Current location is unavailable")
                             )
                         } else {
                             continuation.resume(
-                                LocationCoordinates(
-                                    latitude = location.latitude,
-                                    longitude = location.longitude
-                                )
+                                LocationCoordinates(location.latitude, location.longitude)
                             )
                         }
                     }
                     .addOnFailureListener { error ->
-                        Log.e("LocationDebug", "Location request failed", error)
-
-                        if (continuation.isActive) {
-                            continuation.resumeWithException(error)
-                        }
+                        if (continuation.isActive) continuation.resumeWithException(error)
                     }
             } catch (error: SecurityException) {
                 if (continuation.isActive) continuation.resumeWithException(error)
