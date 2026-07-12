@@ -35,6 +35,9 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
@@ -151,7 +154,7 @@ class MainViewModelTest {
 
         assertEquals("Kyiv", repository.lastCity)
         assertEquals("Kyiv", viewModel.uiState.value.currentWeather?.city)
-        assertEquals("Now", viewModel.uiState.value.currentWeather?.time)
+        assertEquals("12:34", viewModel.uiState.value.currentWeather?.time)
         assertEquals("Clear", viewModel.uiState.value.currentWeather?.condition)
         assertEquals("21\u00B0C", viewModel.uiState.value.currentWeather?.currentTemperature)
         assertFalse(viewModel.uiState.value.isLoading)
@@ -239,7 +242,9 @@ class MainViewModelTest {
         GetCurrentWeatherUseCase(repository),
         GetCurrentLocationUseCase(locationRepository),
         SearchCityWeatherUseCase(repository),
-        MapWeatherForecastToPresentationUseCase()
+        MapWeatherForecastToPresentationUseCase(
+            Clock.fixed(Instant.parse("2026-07-05T12:34:00Z"), ZoneOffset.UTC)
+        )
     )
 
     private class FakeLocationRepository(

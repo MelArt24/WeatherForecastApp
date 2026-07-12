@@ -10,7 +10,7 @@ interface WeatherApiService {
         @Query("lon") lon: String? = null,
         @Query("place_id") placeId: String? = null,
         @Query("sections") sections: String = "all",
-        @Query("timezone") timezone: String = "UTC",
+        @Query("timezone") timezone: String,
         @Query("language") language: String = "en",
         @Query("units") units: String = "metric",
         @Query("key") apiKey: String

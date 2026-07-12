@@ -9,16 +9,24 @@ import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 class MapWeatherForecastToPresentationUseCaseTest {
-    private val useCase = MapWeatherForecastToPresentationUseCase()
+    private val useCase = MapWeatherForecastToPresentationUseCase(
+        Clock.fixed(
+            Instant.parse("2026-07-05T12:34:00Z"),
+            ZoneId.of("Europe/Kyiv")
+        )
+    )
 
     @Test
     fun invoke_mapsForecastToCurrentAndDailyWeatherModels() {
         val result = useCase(forecast(), city = "Kyiv")
 
         assertEquals("Kyiv", result.current?.city)
-        assertEquals("Now", result.current?.time)
+        assertEquals("15:34", result.current?.time)
         assertEquals("Clear", result.current?.condition)
         assertEquals("21\u00B0C", result.current?.currentTemperature)
         assertEquals("18", result.current?.minimumTemperature)

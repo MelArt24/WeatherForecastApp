@@ -5,8 +5,13 @@ import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.Clock
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
-class MapWeatherForecastToPresentationUseCase {
+class MapWeatherForecastToPresentationUseCase(
+    private val clock: Clock = Clock.systemDefaultZone()
+) {
     operator fun invoke(
         forecast: WeatherForecast,
         city: String?
@@ -29,7 +34,7 @@ class MapWeatherForecastToPresentationUseCase {
         val current = daily.firstOrNull()?.let { firstDay ->
             WeatherModel(
                 city = cityName,
-                time = "Now",
+                time = LocalTime.now(clock).format(CURRENT_TIME_FORMATTER),
                 condition = forecast.current.summary,
                 currentTemperature = forecast.current.temperature.toInt().toString() + "\u00B0C",
                 minimumTemperature = firstDay.minimumTemperature,
@@ -56,5 +61,9 @@ class MapWeatherForecastToPresentationUseCase {
             array.put(obj)
         }
         return array.toString()
+    }
+
+    private companion object {
+        val CURRENT_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     }
 }
