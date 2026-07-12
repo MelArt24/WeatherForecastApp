@@ -29,6 +29,7 @@ import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherIconHelper
+import com.am24.weatherforecastapp.presentation.WeatherUiEvent
 import com.am24.weatherforecastapp.presentation.theme.Black
 import com.am24.weatherforecastapp.presentation.theme.BlueBg
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -37,14 +38,19 @@ import org.json.JSONArray
 
 @Composable
 fun MainScreen(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProviderClient) {
-    val dataCurrent by viewModel.dataCurrent.collectAsStateWithLifecycle()
-    val dataList by viewModel.dataList.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.errorFlow.collect { errorResId ->
-            errorResId?.let {
-                Toast.makeText(context, context.getString(it), Toast.LENGTH_SHORT).show()
+        viewModel.events.collect { event ->
+            when (event) {
+                is WeatherUiEvent.ShowError -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(event.messageResId),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
@@ -67,7 +73,7 @@ fun MainScreen(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProv
                 .padding(10.dp)
         ) {
             MainCard(
-                weather = dataCurrent,
+                weather = uiState.displayedWeather,
                 onSyncClick = { viewModel.getLocation(fLocalProviderClient) },
                 onSearchClick = {
                     DialogManager.citySearchDialog(context, object : DialogManager.Listener {
@@ -80,7 +86,12 @@ fun MainScreen(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProv
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            WeatherTabs(dataCurrent, dataList, onDayClick = { viewModel.setSelectedDay(it) })
+            WeatherTabs(
+                displayedWeather = uiState.displayedWeather,
+                dailyWeather = uiState.dailyWeather,
+                isLoading = uiState.isLoading,
+                onDayClick = viewModel::setSelectedDay
+            )
         }
     }
 }
@@ -175,8 +186,9 @@ fun MainCard(
 
 @Composable
 fun WeatherTabs(
-    dataCurrent: WeatherModel?,
-    dataList: List<WeatherModel>,
+    displayedWeather: WeatherModel?,
+    dailyWeather: List<WeatherModel>,
+    isLoading: Boolean,
     onDayClick: (WeatherModel) -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = { 2 })
@@ -208,8 +220,8 @@ fun WeatherTabs(
             modifier = Modifier.fillMaxWidth()
         ) { page ->
             when (page) {
-                0 -> HoursList(dataCurrent)
-                1 -> DaysList(dataList, onDayClick)
+                0 -> HoursList(displayedWeather)
+                1 -> DaysList(dailyWeather, isLoading, onDayClick)
             }
         }
     }
@@ -261,8 +273,8 @@ fun HoursList(weather: WeatherModel?) {
 }
 
 @Composable
-fun DaysList(days: List<WeatherModel>, onDayClick: (WeatherModel) -> Unit) {
-    if (days.isEmpty()) {
+fun DaysList(days: List<WeatherModel>, isLoading: Boolean, onDayClick: (WeatherModel) -> Unit) {
+    if (isLoading && days.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color.White)
         }
