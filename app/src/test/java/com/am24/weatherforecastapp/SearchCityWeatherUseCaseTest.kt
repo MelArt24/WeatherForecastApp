@@ -1,96 +1,94 @@
 package com.am24.weatherforecastapp
 
 import com.am24.weatherforecastapp.domain.model.CurrentWeather
+import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
+import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
+import com.am24.weatherforecastapp.domain.usecase.CityNotFoundException
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import kotlinx.coroutines.test.runTest
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
-import retrofit2.HttpException
-import retrofit2.Response
 
 class SearchCityWeatherUseCaseTest {
     @Test
-    fun invoke_usesOriginalCityWhenRequestSucceeds() = runTest {
-        val repository = FakeWeatherRepository(
-            responses = mutableListOf(FakeResponse.Success(emptyForecast()))
+    fun localizedQuery_resolvesCoordinatesAndPreservesLocalizedName() = runTest {
+        val weatherRepository = FakeWeatherRepository()
+        val geocodingRepository = FakeGeocodingRepository(
+            GeocodedLocation(39.9042, 116.4074, "Пекін")
         )
-        val useCase = SearchCityWeatherUseCase(repository)
 
-        val result = useCase("Kyiv")
+        val result = SearchCityWeatherUseCase(weatherRepository, geocodingRepository)("Пекін")
 
-        assertEquals(listOf("Kyiv"), repository.requestedCities)
-        assertEquals("Kyiv", result.city)
+        assertEquals("Пекін", geocodingRepository.query)
+        assertEquals("39.9042", weatherRepository.lat)
+        assertEquals("116.4074", weatherRepository.lon)
+        assertNull(weatherRepository.city)
+        assertEquals("Пекін", result.city)
     }
 
     @Test
-    fun invoke_retriesWithTransliteratedCityWhenBadRequestFailsFirstSearch() = runTest {
-        val repository = FakeWeatherRepository(
-            responses = mutableListOf(
-                FakeResponse.Failure(httpException(400)),
-                FakeResponse.Success(emptyForecast())
-            )
+    fun missingLocalizedName_usesNormalizedOriginalQuery() = runTest {
+        val useCase = SearchCityWeatherUseCase(
+            FakeWeatherRepository(),
+            FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, null))
         )
-        val useCase = SearchCityWeatherUseCase(repository)
 
-        val result = useCase("Київ")
+        val result = useCase("  Київ   місто ")
 
-        assertEquals(listOf("Київ", "Kyiv"), repository.requestedCities)
-        assertEquals("Kyiv", result.city)
+        assertEquals("Київ місто", result.city)
     }
 
-    @Test(expected = HttpException::class)
-    fun invoke_rethrowsHttpExceptionWhenTransliteratedRetryFails() = runTest {
-        val repository = FakeWeatherRepository(
-            responses = mutableListOf(
-                FakeResponse.Failure(httpException(400)),
-                FakeResponse.Failure(httpException(400))
-            )
-        )
-        val useCase = SearchCityWeatherUseCase(repository)
-
-        useCase("Київ")
+    @Test(expected = CityNotFoundException::class)
+    fun missingGeocodingResult_producesCityNotFound() = runTest {
+        SearchCityWeatherUseCase(
+            FakeWeatherRepository(),
+            FakeGeocodingRepository(null)
+        )("Невідоме місце")
     }
 
-    private class FakeWeatherRepository(
-        private val responses: MutableList<FakeResponse>
-    ) : WeatherRepository {
-        val requestedCities = mutableListOf<String?>()
+    @Test(expected = CityNotFoundException::class)
+    fun blankQuery_producesCityNotFound() = runTest {
+        SearchCityWeatherUseCase(
+            FakeWeatherRepository(),
+            FakeGeocodingRepository(null)
+        )("   ")
+    }
+
+    private class FakeGeocodingRepository(
+        private val result: GeocodedLocation?
+    ) : GeocodingRepository {
+        var query: String? = null
+
+        override suspend fun searchLocation(query: String): GeocodedLocation? {
+            this.query = query
+            return result
+        }
+
+        override suspend fun resolvePlaceName(latitude: Double, longitude: Double): String? = null
+    }
+
+    private class FakeWeatherRepository : WeatherRepository {
+        var lat: String? = null
+        var lon: String? = null
+        var city: String? = null
 
         override suspend fun getWeatherData(
             lat: String?,
             lon: String?,
             city: String?
         ): WeatherForecast {
-            requestedCities.add(city)
-            return when (val response = responses.removeAt(0)) {
-                is FakeResponse.Success -> response.forecast
-                is FakeResponse.Failure -> throw response.exception
-            }
+            this.lat = lat
+            this.lon = lon
+            this.city = city
+            return WeatherForecast(
+                cityName = "Beijing",
+                current = CurrentWeather("Clear", 21.4, 2),
+                hourly = emptyList(),
+                daily = emptyList()
+            )
         }
     }
-
-    private sealed class FakeResponse {
-        data class Success(val forecast: WeatherForecast) : FakeResponse()
-        data class Failure(val exception: HttpException) : FakeResponse()
-    }
-
-    private fun httpException(code: Int): HttpException {
-        val body = "".toResponseBody("text/plain".toMediaType())
-        return HttpException(Response.error<String>(code, body))
-    }
-
-    private fun emptyForecast() = WeatherForecast(
-        cityName = "Kyiv",
-        current = CurrentWeather(
-            summary = "Clear",
-            temperature = 21.4,
-            iconCode = 1
-        ),
-        hourly = emptyList(),
-        daily = emptyList()
-    )
 }

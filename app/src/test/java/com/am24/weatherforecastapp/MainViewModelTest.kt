@@ -4,10 +4,12 @@ import com.am24.weatherforecastapp.domain.model.CurrentWeather
 import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
+import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.model.UserLocation
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
+import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
@@ -152,12 +154,44 @@ class MainViewModelTest {
         viewModel.requestCityWeather("Kyiv")
         advanceUntilIdle()
 
-        assertEquals("Kyiv", repository.lastCity)
+        assertNull(repository.lastCity)
+        assertEquals("50.45", repository.lastLat)
+        assertEquals("30.52", repository.lastLon)
         assertEquals("Kyiv", viewModel.uiState.value.currentWeather?.city)
         assertEquals("12:34", viewModel.uiState.value.currentWeather?.time)
         assertEquals("Clear", viewModel.uiState.value.currentWeather?.condition)
         assertEquals("21\u00B0C", viewModel.uiState.value.currentWeather?.currentTemperature)
         assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun cityRequest_displaysLocalizedGeocoderName() = runTest(testDispatcher) {
+        val viewModel = viewModel(
+            repository = FakeWeatherRepository(response = { successForecast() }),
+            geocodingRepository = FakeGeocodingRepository(localizedName = "Пекін")
+        )
+
+        viewModel.requestCityWeather("Пекін")
+        advanceUntilIdle()
+
+        assertEquals("Пекін", viewModel.uiState.value.currentWeather?.city)
+        assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+    }
+
+    @Test
+    fun citySearchWithoutGeocodingResult_emitsCityNotFoundOnce() = runTest(testDispatcher) {
+        val viewModel = viewModel(
+            repository = FakeWeatherRepository(),
+            geocodingRepository = FakeGeocodingRepository(found = false)
+        )
+        val event = async { viewModel.events.first() }
+
+        viewModel.requestCityWeather("Unknown place")
+        advanceUntilIdle()
+
+        assertEquals(WeatherUiError.CityNotFound, viewModel.uiState.value.error)
+        assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
+        assertEquals(WeatherUiEvent.ShowError(R.string.city_not_found), event.await())
     }
 
     @Test
@@ -237,13 +271,15 @@ class MainViewModelTest {
 
     private fun viewModel(
         repository: WeatherRepository,
-        locationRepository: LocationRepository = FakeLocationRepository()
+        locationRepository: LocationRepository = FakeLocationRepository(),
+        geocodingRepository: GeocodingRepository = FakeGeocodingRepository()
     ) = MainViewModel(
         GetCurrentWeatherUseCase(repository),
         GetCurrentLocationUseCase(locationRepository),
-        SearchCityWeatherUseCase(repository),
+        SearchCityWeatherUseCase(repository, geocodingRepository),
         MapWeatherForecastToPresentationUseCase(
-            Clock.fixed(Instant.parse("2026-07-05T12:34:00Z"), ZoneOffset.UTC)
+            conditionLocalizer = { _, fallback -> fallback },
+            clock = Clock.fixed(Instant.parse("2026-07-05T12:34:00Z"), ZoneOffset.UTC)
         )
     )
 
@@ -251,6 +287,16 @@ class MainViewModelTest {
         private val coordinates: UserLocation = UserLocation(50.45, 30.52, "Kyiv")
     ) : LocationRepository {
         override suspend fun getCurrentLocation(): UserLocation = coordinates
+    }
+
+    private class FakeGeocodingRepository(
+        private val localizedName: String? = null,
+        private val found: Boolean = true
+    ) : GeocodingRepository {
+        override suspend fun searchLocation(query: String): GeocodedLocation? =
+            if (found) GeocodedLocation(50.45, 30.52, localizedName ?: query) else null
+
+        override suspend fun resolvePlaceName(latitude: Double, longitude: Double): String? = null
     }
 
     private class FakeWeatherRepository(

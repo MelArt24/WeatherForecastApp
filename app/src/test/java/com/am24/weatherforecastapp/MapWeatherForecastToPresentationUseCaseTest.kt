@@ -4,6 +4,7 @@ import com.am24.weatherforecastapp.domain.model.CurrentWeather
 import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
+import com.am24.weatherforecastapp.domain.model.WeatherCondition
 import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
@@ -15,7 +16,10 @@ import java.time.ZoneId
 
 class MapWeatherForecastToPresentationUseCaseTest {
     private val useCase = MapWeatherForecastToPresentationUseCase(
-        Clock.fixed(
+        conditionLocalizer = { condition, fallback ->
+            if (condition == WeatherCondition.Unknown) fallback else "localized:$condition"
+        },
+        clock = Clock.fixed(
             Instant.parse("2026-07-05T12:34:00Z"),
             ZoneId.of("Europe/Kyiv")
         )
@@ -63,6 +67,24 @@ class MapWeatherForecastToPresentationUseCaseTest {
         assertEquals("Clear", firstHour.getString("summary"))
         assertEquals(21.4, firstHour.getDouble("temperature"), 0.0)
         assertEquals(1, firstHour.getInt("icon"))
+    }
+
+    @Test
+    fun invoke_localizesStableConditionsAndFallsBackForUnknown() {
+        val forecast = forecast().copy(
+            current = forecast().current.copy(condition = WeatherCondition.Clear),
+            hourly = listOf(
+                forecast().hourly.first().copy(condition = WeatherCondition.Rain),
+                forecast().hourly.first().copy(summary = "Provider fallback")
+            )
+        )
+
+        val result = useCase(forecast, city = "Kyiv")
+        val hours = JSONArray(result.current?.hours)
+
+        assertEquals("localized:Clear", result.current?.condition)
+        assertEquals("localized:Rain", hours.getJSONObject(0).getString("summary"))
+        assertEquals("Provider fallback", hours.getJSONObject(1).getString("summary"))
     }
 
     @Test

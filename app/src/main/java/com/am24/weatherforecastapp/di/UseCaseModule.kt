@@ -21,11 +21,12 @@ val useCaseModule = module {
 
     factory {
         SearchCityWeatherUseCase(
-            weatherRepository = get()
+            weatherRepository = get(),
+            geocodingRepository = get()
         )
     }
 
     factory {
-        MapWeatherForecastToPresentationUseCase()
+        MapWeatherForecastToPresentationUseCase(conditionLocalizer = get())
     }
 }

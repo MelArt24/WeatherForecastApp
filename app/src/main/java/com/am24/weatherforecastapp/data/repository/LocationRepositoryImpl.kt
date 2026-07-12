@@ -1,8 +1,8 @@
 package com.am24.weatherforecastapp.data.repository
 
 import android.annotation.SuppressLint
-import android.content.Context
 import com.am24.weatherforecastapp.domain.model.UserLocation
+import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -10,19 +10,13 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
-import android.location.Address
-import android.location.Geocoder
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.am24.weatherforecastapp.domain.model.LocationCoordinates
-import java.util.Locale
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-class LocationRepositoryImpl(context: Context) : LocationRepository {
+class LocationRepositoryImpl(
+    context: android.content.Context,
+    private val geocodingRepository: GeocodingRepository
+) : LocationRepository {
     private val locationClient = LocationServices.getFusedLocationProviderClient(context.applicationContext)
-
-    private val geocoder = Geocoder(context.applicationContext, Locale.getDefault())
 
     /**
      * Requires location permission to be granted before invocation.
@@ -31,7 +25,7 @@ class LocationRepositoryImpl(context: Context) : LocationRepository {
         val coordinates = getCoordinates()
 
         val placeName = runCatching {
-            getPlaceName(
+            geocodingRepository.resolvePlaceName(
                 latitude = coordinates.latitude,
                 longitude = coordinates.longitude
             )
@@ -76,58 +70,4 @@ class LocationRepositoryImpl(context: Context) : LocationRepository {
             }
         }
 
-    private fun Address.resolvePlaceName(): String? {
-        return locality
-            ?: subLocality
-            ?: subAdminArea
-            ?: adminArea
-    }
-
-    private suspend fun getPlaceName(
-        latitude: Double,
-        longitude: Double
-    ): String? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            getPlaceNameAsync(latitude, longitude)
-        } else {
-            getPlaceNameLegacy(latitude, longitude)
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private suspend fun getPlaceNameAsync(
-        latitude: Double,
-        longitude: Double
-    ): String? = suspendCancellableCoroutine { continuation ->
-
-        geocoder.getFromLocation(
-            latitude,
-            longitude,
-            1
-        ) { addresses ->
-            if (!continuation.isActive) {
-                return@getFromLocation
-            }
-
-            val placeName = addresses
-                .firstOrNull()
-                ?.resolvePlaceName()
-
-            continuation.resume(placeName)
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private suspend fun getPlaceNameLegacy(
-        latitude: Double,
-        longitude: Double
-    ): String? = withContext(Dispatchers.IO) {
-        geocoder.getFromLocation(
-            latitude,
-            longitude,
-            1
-        )
-            ?.firstOrNull()
-            ?.resolvePlaceName()
-    }
 }

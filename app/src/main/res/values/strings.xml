@@ -17,4 +17,18 @@
     <string name="enter_city">Enter your city/town</string>
     <string name="city_not_found">City is not found</string>
     <string name="location_permission_denied">Location permission denied</string>
+    <string name="weather_clear">Clear</string>
+    <string name="weather_mostly_clear">Mostly clear</string>
+    <string name="weather_partly_cloudy">Partly cloudy</string>
+    <string name="weather_cloudy">Cloudy</string>
+    <string name="weather_overcast">Overcast</string>
+    <string name="weather_fog">Fog</string>
+    <string name="weather_drizzle">Light rain</string>
+    <string name="weather_rain">Rain</string>
+    <string name="weather_heavy_rain">Heavy rain</string>
+    <string name="weather_snow">Snow</string>
+    <string name="weather_sleet">Rain and snow</string>
+    <string name="weather_freezing_rain">Freezing rain</string>
+    <string name="weather_hail">Hail</string>
+    <string name="weather_thunderstorm">Thunderstorm</string>
 </resources>

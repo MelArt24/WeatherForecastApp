@@ -5,5 +5,6 @@ data class DailyWeather(
     val summary: String,
     val iconCode: Int,
     val temperatureMin: Double,
-    val temperatureMax: Double
+    val temperatureMax: Double,
+    val condition: WeatherCondition = WeatherCondition.Unknown
 )

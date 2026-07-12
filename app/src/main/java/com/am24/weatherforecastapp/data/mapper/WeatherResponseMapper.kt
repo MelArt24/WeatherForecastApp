@@ -10,6 +10,7 @@ import com.am24.weatherforecastapp.domain.model.CurrentWeather
 import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
+import com.am24.weatherforecastapp.domain.model.weatherConditionFromIcon
 
 fun WeatherResponseDto.toDomain(): WeatherForecast {
     return WeatherForecast(
@@ -24,7 +25,8 @@ fun CurrentWeatherDto.toDomain(): CurrentWeather {
     return CurrentWeather(
         summary = this.summary,
         temperature = this.temperature,
-        iconCode = this.iconNum
+        iconCode = this.iconNum,
+        condition = weatherConditionFromIcon(this.iconNum)
     )
 }
 
@@ -38,7 +40,8 @@ fun DailyDataDto.toDomain(): DailyWeather {
         summary = this.summary,
         iconCode = this.icon,
         temperatureMin = this.allDay.temperatureMin,
-        temperatureMax = this.allDay.temperatureMax
+        temperatureMax = this.allDay.temperatureMax,
+        condition = weatherConditionFromIcon(this.icon)
     )
 }
 
@@ -51,6 +54,7 @@ fun HourlyDataDto.toDomain(): HourlyWeather {
         date = this.date,
         summary = this.summary,
         temperature = this.temperature,
-        iconCode = this.icon
+        iconCode = this.icon,
+        condition = weatherConditionFromIcon(this.icon)
     )
 }

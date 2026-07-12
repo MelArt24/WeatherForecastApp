@@ -6,6 +6,7 @@ import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
+import com.am24.weatherforecastapp.domain.usecase.CityNotFoundException
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
@@ -49,6 +50,8 @@ class MainViewModel(
                 val result = searchCityWeatherUseCase(city)
                 val weather = mapWeatherForecastToPresentationUseCase(result.forecast, result.city)
                 showWeather(weather.current, weather.daily)
+            } catch (e: CityNotFoundException) {
+                showError(WeatherUiError.CityNotFound, R.string.city_not_found)
             } catch (e: HttpException) {
                 showError(WeatherUiError.CityNotFound, R.string.city_not_found)
             } catch (e: Exception) {

@@ -3,6 +3,7 @@ package com.am24.weatherforecastapp.domain.usecase
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
+import com.am24.weatherforecastapp.presentation.WeatherConditionLocalizer
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Clock
@@ -10,6 +11,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 class MapWeatherForecastToPresentationUseCase(
+    private val conditionLocalizer: WeatherConditionLocalizer,
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     operator fun invoke(
@@ -22,7 +24,7 @@ class MapWeatherForecastToPresentationUseCase(
             WeatherModel(
                 city = cityName,
                 time = day.day,
-                condition = day.summary,
+                condition = conditionLocalizer.localize(day.condition, day.summary),
                 currentTemperature = "",
                 minimumTemperature = day.temperatureMin.toInt().toString(),
                 maximumTemperature = day.temperatureMax.toInt().toString(),
@@ -35,7 +37,10 @@ class MapWeatherForecastToPresentationUseCase(
             WeatherModel(
                 city = cityName,
                 time = LocalTime.now(clock).format(CURRENT_TIME_FORMATTER),
-                condition = forecast.current.summary,
+                condition = conditionLocalizer.localize(
+                    forecast.current.condition,
+                    forecast.current.summary
+                ),
                 currentTemperature = forecast.current.temperature.toInt().toString() + "\u00B0C",
                 minimumTemperature = firstDay.minimumTemperature,
                 maximumTemperature = firstDay.maximumTemperature,
@@ -55,7 +60,7 @@ class MapWeatherForecastToPresentationUseCase(
         hourlyData.forEach { data ->
             val obj = JSONObject()
             obj.put("date", data.date)
-            obj.put("summary", data.summary)
+            obj.put("summary", conditionLocalizer.localize(data.condition, data.summary))
             obj.put("temperature", data.temperature)
             obj.put("icon", data.iconCode)
             array.put(obj)
