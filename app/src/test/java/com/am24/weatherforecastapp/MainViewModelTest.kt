@@ -4,6 +4,9 @@ import com.am24.weatherforecastapp.domain.model.CurrentWeather
 import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
+import com.am24.weatherforecastapp.domain.model.LocationCoordinates
+import com.am24.weatherforecastapp.domain.repository.LocationRepository
+import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
@@ -56,9 +59,9 @@ class MainViewModelTest {
     fun currentLocationRequest_isLoadingThenSucceeds() = runTest(testDispatcher) {
         val response = CompletableDeferred<WeatherForecast>()
         val repository = FakeWeatherRepository(response = { response.await() })
-        val viewModel = viewModel(repository)
+        val viewModel = viewModel(repository, FakeLocationRepository())
 
-        viewModel.requestCurrentLocationWeather("50.45", "30.52")
+        viewModel.requestCurrentLocationWeather()
         runCurrent()
 
         assertTrue(viewModel.uiState.value.isLoading)
@@ -96,7 +99,7 @@ class MainViewModelTest {
 
     @Test
     fun emptyForecast_hasExplicitEmptyState() = runTest(testDispatcher) {
-        val viewModel = viewModel(FakeWeatherRepository(response = { emptyForecast() }))
+        val viewModel = viewModel(FakeWeatherRepository(response = { emptyForecast() }), FakeLocationRepository())
 
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
@@ -117,6 +120,27 @@ class MainViewModelTest {
         assertEquals(WeatherUiError.Location, viewModel.uiState.value.error)
         assertFalse(viewModel.uiState.value.isLoading)
         assertEquals(WeatherUiEvent.ShowError(R.string.location_error), event.await())
+    }
+
+    @Test
+    fun missingLocationPermission_setsPermissionError() = runTest(testDispatcher) {
+        val locationRepository = object : LocationRepository {
+            override suspend fun getCurrentLocation(): LocationCoordinates {
+                throw SecurityException("Permission denied")
+            }
+        }
+        val viewModel = viewModel(FakeWeatherRepository(), locationRepository)
+        val event = async { viewModel.events.first() }
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+
+        assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
+        assertEquals(WeatherUiError.LocationPermissionDenied, viewModel.uiState.value.error)
+        assertEquals(
+            WeatherUiEvent.ShowError(R.string.location_permission_denied),
+            event.await()
+        )
     }
 
     @Test
@@ -148,11 +172,21 @@ class MainViewModelTest {
         assertEquals(WeatherUiStatus.Initial, viewModel.uiState.value.status)
     }
 
-    private fun viewModel(repository: WeatherRepository) = MainViewModel(
+    private fun viewModel(
+        repository: WeatherRepository,
+        locationRepository: LocationRepository = FakeLocationRepository()
+    ) = MainViewModel(
         GetCurrentWeatherUseCase(repository),
+        GetCurrentLocationUseCase(locationRepository),
         SearchCityWeatherUseCase(repository),
         MapWeatherForecastToPresentationUseCase()
     )
+
+    private class FakeLocationRepository(
+        private val coordinates: LocationCoordinates = LocationCoordinates(50.45, 30.52)
+    ) : LocationRepository {
+        override suspend fun getCurrentLocation(): LocationCoordinates = coordinates
+    }
 
     private class FakeWeatherRepository(
         private val response: suspend () -> WeatherForecast = { successForecast() }

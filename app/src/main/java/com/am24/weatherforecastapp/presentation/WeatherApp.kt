@@ -10,10 +10,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.am24.weatherforecastapp.MainViewModel
 import com.am24.weatherforecastapp.presentation.screens.MainScreen
-import com.google.android.gms.location.FusedLocationProviderClient
 
 @Composable
-fun WeatherApp(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProviderClient) {
+fun WeatherApp(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -25,7 +24,7 @@ fun WeatherApp(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProv
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("main") {
-                MainScreen(viewModel, fLocalProviderClient)
+                MainScreen(viewModel, onLocationRequest)
             }
         }
     }

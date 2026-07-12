@@ -3,6 +3,7 @@ package com.am24.weatherforecastapp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
+import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
@@ -10,9 +11,6 @@ import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
 import com.am24.weatherforecastapp.presentation.WeatherUiState
 import com.am24.weatherforecastapp.presentation.WeatherUiStatus
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +27,7 @@ import retrofit2.HttpException
  */
 class MainViewModel(
     private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
+    private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
     private val searchCityWeatherUseCase: SearchCityWeatherUseCase,
     private val mapWeatherForecastToPresentationUseCase: MapWeatherForecastToPresentationUseCase
 ) : ViewModel() {
@@ -41,22 +40,6 @@ class MainViewModel(
 
     fun setSelectedDay(item: WeatherModel) {
         _uiState.update { it.copy(selectedDay = item) }
-    }
-
-    fun requestCurrentLocationWeather(
-        lat: String? = null,
-        lon: String? = null
-    ) {
-        viewModelScope.launch {
-            startLoading()
-            try {
-                val response = getCurrentWeatherUseCase(lat, lon)
-                val weather = mapWeatherForecastToPresentationUseCase(response, null)
-                showWeather(weather.current, weather.daily)
-            } catch (e: Exception) {
-                showError(WeatherUiError.Location, R.string.location_error)
-            }
-        }
     }
 
     fun requestCityWeather(city: String) {
@@ -74,27 +57,22 @@ class MainViewModel(
         }
     }
 
-    fun getLocation(fLocalProviderClient: FusedLocationProviderClient) {
-        val cancellationToken = CancellationTokenSource()
-        try {
-            fLocalProviderClient
-                .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
-                .addOnCompleteListener { task ->
-                    val location = task.result
-                    if (location != null) {
-                        requestCurrentLocationWeather(
-                            lat = location.latitude.toString(),
-                            lon = location.longitude.toString()
-                        )
-                    } else {
-                        emitError(WeatherUiError.Location, R.string.location_error)
-                    }
-                }
-                .addOnFailureListener {
-                    emitError(WeatherUiError.Location, R.string.location_error)
-                }
-        } catch (e: SecurityException) {
-            emitError(WeatherUiError.LocationPermissionDenied, R.string.location_permission_denied)
+    fun requestCurrentLocationWeather() {
+        viewModelScope.launch {
+            startLoading()
+            try {
+                val location = getCurrentLocationUseCase()
+                val response = getCurrentWeatherUseCase(
+                    location.latitude.toString(),
+                    location.longitude.toString()
+                )
+                val weather = mapWeatherForecastToPresentationUseCase(response, null)
+                showWeather(weather.current, weather.daily)
+            } catch (e: SecurityException) {
+                showError(WeatherUiError.LocationPermissionDenied, R.string.location_permission_denied)
+            } catch (e: Exception) {
+                showError(WeatherUiError.Location, R.string.location_error)
+            }
         }
     }
 
@@ -124,7 +102,4 @@ class MainViewModel(
         _events.send(WeatherUiEvent.ShowError(messageResId))
     }
 
-    private fun emitError(error: WeatherUiError, messageResId: Int) {
-        viewModelScope.launch { showError(error, messageResId) }
-    }
 }

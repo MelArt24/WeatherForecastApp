@@ -32,12 +32,11 @@ import com.am24.weatherforecastapp.presentation.WeatherIconHelper
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
 import com.am24.weatherforecastapp.presentation.theme.Black
 import com.am24.weatherforecastapp.presentation.theme.BlueBg
-import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 @Composable
-fun MainScreen(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProviderClient) {
+fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -74,7 +73,7 @@ fun MainScreen(viewModel: MainViewModel, fLocalProviderClient: FusedLocationProv
         ) {
             MainCard(
                 weather = uiState.displayedWeather,
-                onSyncClick = { viewModel.getLocation(fLocalProviderClient) },
+                onSyncClick = onLocationRequest,
                 onSearchClick = {
                     DialogManager.citySearchDialog(context, object : DialogManager.Listener {
                         override fun onClick(name: String?) {
