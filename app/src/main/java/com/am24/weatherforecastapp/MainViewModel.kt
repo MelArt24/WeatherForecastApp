@@ -66,7 +66,7 @@ class MainViewModel(
                     location.latitude.toString(),
                     location.longitude.toString()
                 )
-                val weather = mapWeatherForecastToPresentationUseCase(response, null)
+                val weather = mapWeatherForecastToPresentationUseCase(response, location.placeName)
                 showWeather(weather.current, weather.daily)
             } catch (e: SecurityException) {
                 showError(WeatherUiError.LocationPermissionDenied, R.string.location_permission_denied)

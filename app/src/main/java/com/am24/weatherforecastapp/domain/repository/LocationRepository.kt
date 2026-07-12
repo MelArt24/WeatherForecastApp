@@ -1,7 +1,7 @@
 package com.am24.weatherforecastapp.domain.repository
 
-import com.am24.weatherforecastapp.domain.model.LocationCoordinates
+import com.am24.weatherforecastapp.domain.model.UserLocation
 
 interface LocationRepository {
-    suspend fun getCurrentLocation(): LocationCoordinates
+    suspend fun getCurrentLocation(): UserLocation
 }
