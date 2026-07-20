@@ -219,7 +219,7 @@ fun WeatherTabs(
             modifier = Modifier.fillMaxWidth()
         ) { page ->
             when (page) {
-                0 -> HoursList(displayedWeather)
+                0 -> HoursList(displayedWeather, isLoading)
                 1 -> DaysList(dailyWeather, isLoading, onDayClick)
             }
         }
@@ -227,7 +227,7 @@ fun WeatherTabs(
 }
 
 @Composable
-fun HoursList(weather: WeatherModel?) {
+fun HoursList(weather: WeatherModel?, isLoading: Boolean) {
     val hours = remember(weather) {
         if (weather == null || weather.hours.isEmpty()) emptyList<WeatherModel>()
         else {
@@ -255,9 +255,13 @@ fun HoursList(weather: WeatherModel?) {
         }
     }
 
-    if (hours.isEmpty()) {
+    if (hours.isEmpty() && !isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = "No hourly data available", color = Color.White.copy(alpha = 0.6f))
+        }
+    } else if (isLoading){
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color.White)
         }
     } else {
         LazyColumn(
@@ -273,7 +277,11 @@ fun HoursList(weather: WeatherModel?) {
 
 @Composable
 fun DaysList(days: List<WeatherModel>, isLoading: Boolean, onDayClick: (WeatherModel) -> Unit) {
-    if (isLoading && days.isEmpty()) {
+    if (days.isEmpty() && !isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(text = "No hourly data available", color = Color.White.copy(alpha = 0.6f))
+        }
+    } else if (isLoading){
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color.White)
         }
