@@ -6,6 +6,7 @@ import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.model.UserLocation
+import com.am24.weatherforecastapp.domain.OfflineException
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
@@ -154,7 +155,7 @@ class MainViewModelTest {
         viewModel.requestCityWeather("Kyiv")
         advanceUntilIdle()
 
-        assertNull(repository.lastCity)
+        assertEquals("Kyiv", repository.lastCity)
         assertEquals("50.45", repository.lastLat)
         assertEquals("30.52", repository.lastLon)
         assertEquals("Kyiv", viewModel.uiState.value.currentWeather?.city)
@@ -214,9 +215,23 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
-        assertEquals(WeatherUiError.Location, viewModel.uiState.value.error)
+        assertEquals(WeatherUiError.Weather, viewModel.uiState.value.error)
         assertFalse(viewModel.uiState.value.isLoading)
-        assertEquals(WeatherUiEvent.ShowError(R.string.location_error), event.await())
+        assertEquals(WeatherUiEvent.ShowError(R.string.weather_error), event.await())
+    }
+
+    @Test
+    fun offlineRequestWithoutCache_showsOfflineError() = runTest(testDispatcher) {
+        val viewModel = viewModel(
+            FakeWeatherRepository(response = { throw OfflineException() })
+        )
+        val event = async { viewModel.events.first() }
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+
+        assertEquals(WeatherUiError.Offline, viewModel.uiState.value.error)
+        assertEquals(WeatherUiEvent.ShowError(R.string.offline_error), event.await())
     }
 
     @Test
@@ -225,6 +240,8 @@ class MainViewModelTest {
             override suspend fun getCurrentLocation(): UserLocation {
                 throw SecurityException("Permission denied")
             }
+            override suspend fun getLastSavedLocation(): UserLocation? = null
+            override suspend fun saveLastLocation(location: UserLocation) = Unit
         }
         val viewModel = viewModel(FakeWeatherRepository(), locationRepository)
         val event = async { viewModel.events.first() }
@@ -241,6 +258,41 @@ class MainViewModelTest {
     }
 
     @Test
+    fun deniedPermission_withSavedLocation_loadsWeatherWithoutPermissionError() =
+        runTest(testDispatcher) {
+            val weatherRepository = FakeWeatherRepository(response = { successForecast() })
+            val locationRepository = FakeLocationRepository(
+                currentFailure = SecurityException("Permission denied"),
+                savedLocation = UserLocation(49.84, 24.03, "Lviv")
+            )
+            val viewModel = viewModel(weatherRepository, locationRepository)
+
+            viewModel.requestCurrentLocationWeather()
+            advanceUntilIdle()
+
+            assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+            assertNull(viewModel.uiState.value.error)
+            assertEquals("Lviv", viewModel.uiState.value.currentWeather?.city)
+            assertEquals("49.84", weatherRepository.lastLat)
+            assertEquals("24.03", weatherRepository.lastLon)
+        }
+
+    @Test
+    fun locationFailure_withoutSavedLocation_setsLocationError() = runTest(testDispatcher) {
+        val locationRepository = FakeLocationRepository(
+            currentFailure = IllegalStateException("Unavailable")
+        )
+        val viewModel = viewModel(FakeWeatherRepository(), locationRepository)
+        val event = async { viewModel.events.first() }
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+
+        assertEquals(WeatherUiError.Location, viewModel.uiState.value.error)
+        assertEquals(WeatherUiEvent.ShowError(R.string.location_error), event.await())
+    }
+
+    @Test
     fun errorEvent_isConsumedOnlyOncePerFailure() = runTest(testDispatcher) {
         val viewModel = viewModel(FakeWeatherRepository(response = { throw IllegalStateException() }))
 
@@ -248,7 +300,7 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            WeatherUiEvent.ShowError(R.string.location_error),
+                WeatherUiEvent.ShowError(R.string.weather_error),
             viewModel.events.first()
         )
         val secondCollector = async { viewModel.events.first() }
@@ -284,9 +336,16 @@ class MainViewModelTest {
     )
 
     private class FakeLocationRepository(
-        private val coordinates: UserLocation = UserLocation(50.45, 30.52, "Kyiv")
+        private val coordinates: UserLocation = UserLocation(50.45, 30.52, "Kyiv"),
+        private val currentFailure: Exception? = null,
+        private val savedLocation: UserLocation? = null
     ) : LocationRepository {
-        override suspend fun getCurrentLocation(): UserLocation = coordinates
+        override suspend fun getCurrentLocation(): UserLocation {
+            currentFailure?.let { throw it }
+            return coordinates
+        }
+        override suspend fun getLastSavedLocation(): UserLocation? = savedLocation
+        override suspend fun saveLastLocation(location: UserLocation) = Unit
     }
 
     private class FakeGeocodingRepository(

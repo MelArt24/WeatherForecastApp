@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 val localProperties = Properties().apply {
@@ -86,6 +87,10 @@ dependencies {
     implementation(libs.retrofit.serialization)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.datastore.preferences)
+    ksp(libs.androidx.room.compiler)
 
     // Compose
     val composeBom = platform(libs.androidx.compose.bom)
@@ -108,4 +113,9 @@ dependencies {
     testImplementation("org.json:json:20240303")
     androidTestImplementation (libs.core.ktx)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.room.testing)
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }

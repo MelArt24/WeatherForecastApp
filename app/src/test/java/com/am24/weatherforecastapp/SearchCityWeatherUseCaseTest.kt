@@ -5,7 +5,8 @@ import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
-import com.am24.weatherforecastapp.domain.usecase.CityNotFoundException
+import com.am24.weatherforecastapp.data.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.CityNotFoundException
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -17,16 +18,16 @@ class SearchCityWeatherUseCaseTest {
     fun localizedQuery_resolvesCoordinatesAndPreservesLocalizedName() = runTest {
         val weatherRepository = FakeWeatherRepository()
         val geocodingRepository = FakeGeocodingRepository(
-            GeocodedLocation(39.9042, 116.4074, "Пекін")
+            GeocodedLocation(39.9042, 116.4074, "РџРµРєС–РЅ")
         )
 
-        val result = SearchCityWeatherUseCase(weatherRepository, geocodingRepository)("Пекін")
+        val result = SearchCityWeatherUseCase(weatherRepository, geocodingRepository)("РџРµРєС–РЅ")
 
-        assertEquals("Пекін", geocodingRepository.query)
+        assertEquals("РџРµРєС–РЅ", geocodingRepository.query)
         assertEquals("39.9042", weatherRepository.lat)
         assertEquals("116.4074", weatherRepository.lon)
-        assertNull(weatherRepository.city)
-        assertEquals("Пекін", result.city)
+        assertEquals(geocodingRepository.query, weatherRepository.city)
+        assertEquals("РџРµРєС–РЅ", result.city)
     }
 
     @Test
@@ -36,9 +37,9 @@ class SearchCityWeatherUseCaseTest {
             FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, null))
         )
 
-        val result = useCase("  Київ   місто ")
+        val result = useCase("  РљРёС—РІ   РјС–СЃС‚Рѕ ")
 
-        assertEquals("Київ місто", result.city)
+        assertEquals("РљРёС—РІ РјС–СЃС‚Рѕ", result.city)
     }
 
     @Test(expected = CityNotFoundException::class)
@@ -46,7 +47,7 @@ class SearchCityWeatherUseCaseTest {
         SearchCityWeatherUseCase(
             FakeWeatherRepository(),
             FakeGeocodingRepository(null)
-        )("Невідоме місце")
+        )("РќРµРІС–РґРѕРјРµ РјС–СЃС†Рµ")
     }
 
     @Test(expected = CityNotFoundException::class)
@@ -55,6 +56,22 @@ class SearchCityWeatherUseCaseTest {
             FakeWeatherRepository(),
             FakeGeocodingRepository(null)
         )("   ")
+    }
+
+    @Test
+    fun offlineSearch_usesCachedCityWithoutGeocoding() = runTest {
+        val weatherRepository = FakeWeatherRepository()
+        val geocodingRepository = FakeGeocodingRepository(null)
+
+        val result = SearchCityWeatherUseCase(
+            weatherRepository,
+            geocodingRepository,
+            NetworkMonitor { false }
+        )("  Kyiv ")
+
+        assertEquals("Kyiv", result.city)
+        assertEquals("Kyiv", weatherRepository.city)
+        assertNull(geocodingRepository.query)
     }
 
     private class FakeGeocodingRepository(

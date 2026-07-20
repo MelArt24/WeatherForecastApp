@@ -1,4 +1,4 @@
-package com.am24.weatherforecastapp.domain.usecase
+package com.am24.weatherforecastapp.domain
 
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 

@@ -9,7 +9,8 @@ import org.koin.dsl.module
 val useCaseModule = module {
     factory {
         GetCurrentLocationUseCase(
-            locationRepository = get()
+            locationRepository = get(),
+            networkMonitor = get()
         )
     }
 
@@ -22,7 +23,8 @@ val useCaseModule = module {
     factory {
         SearchCityWeatherUseCase(
             weatherRepository = get(),
-            geocodingRepository = get()
+            geocodingRepository = get(),
+            networkMonitor = get()
         )
     }
 

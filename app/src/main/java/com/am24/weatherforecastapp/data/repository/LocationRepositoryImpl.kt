@@ -1,7 +1,11 @@
 package com.am24.weatherforecastapp.data.repository
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.util.Log
 import com.am24.weatherforecastapp.domain.model.UserLocation
+import com.am24.weatherforecastapp.domain.model.SavedLocation
+import com.am24.weatherforecastapp.data.local.SavedLocationLocalDataSource
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import com.google.android.gms.location.LocationServices
@@ -10,11 +14,14 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.CancellationException
 import com.am24.weatherforecastapp.domain.model.LocationCoordinates
 
 class LocationRepositoryImpl(
-    context: android.content.Context,
-    private val geocodingRepository: GeocodingRepository
+    context: Context,
+    private val geocodingRepository: GeocodingRepository,
+    private val savedLocationLocalDataSource: SavedLocationLocalDataSource,
+    private val currentTimeMillis: () -> Long = System::currentTimeMillis
 ) : LocationRepository {
     private val locationClient = LocationServices.getFusedLocationProviderClient(context.applicationContext)
 
@@ -23,18 +30,34 @@ class LocationRepositoryImpl(
      */
     override suspend fun getCurrentLocation(): UserLocation {
         val coordinates = getCoordinates()
-
-        val placeName = runCatching {
+        val placeName = try {
             geocodingRepository.resolvePlaceName(
                 latitude = coordinates.latitude,
                 longitude = coordinates.longitude
             )
-        }.getOrNull()
-
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        }
         return UserLocation(
             latitude = coordinates.latitude,
             longitude = coordinates.longitude,
             placeName = placeName
+        )
+    }
+
+    override suspend fun getLastSavedLocation(): UserLocation? =
+        savedLocationLocalDataSource.getLocation()?.toUserLocation()
+
+    override suspend fun saveLastLocation(location: UserLocation) {
+        savedLocationLocalDataSource.saveLocation(
+            SavedLocation(
+                latitude = location.latitude,
+                longitude = location.longitude,
+                placeName = location.placeName,
+                savedAtMillis = currentTimeMillis()
+            )
         )
     }
 

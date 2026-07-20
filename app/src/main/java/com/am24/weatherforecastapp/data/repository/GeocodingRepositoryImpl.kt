@@ -8,6 +8,7 @@ import androidx.annotation.RequiresApi
 import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -18,13 +19,18 @@ class GeocodingRepositoryImpl(
 
     override suspend fun searchLocation(query: String): GeocodedLocation? {
         if (!Geocoder.isPresent()) return null
-        val address = runCatching {
+        val address = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 searchAsync(query)
             } else {
                 searchLegacy(query)
             }
-        }.getOrNull()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        }
+
         return address?.let {
             GeocodedLocation(
                 latitude = it.latitude,
@@ -36,13 +42,17 @@ class GeocodingRepositoryImpl(
 
     override suspend fun resolvePlaceName(latitude: Double, longitude: Double): String? {
         if (!Geocoder.isPresent()) return null
-        val address = runCatching {
+        val address = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 reverseAsync(latitude, longitude)
             } else {
                 reverseLegacy(latitude, longitude)
             }
-        }.getOrNull()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        }
         return address?.resolvePlaceName()
     }
 

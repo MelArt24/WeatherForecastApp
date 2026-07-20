@@ -6,7 +6,8 @@ import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
-import com.am24.weatherforecastapp.domain.usecase.CityNotFoundException
+import com.am24.weatherforecastapp.domain.CityNotFoundException
+import com.am24.weatherforecastapp.domain.OfflineException
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 
 /**
@@ -50,10 +52,14 @@ class MainViewModel(
                 val result = searchCityWeatherUseCase(city)
                 val weather = mapWeatherForecastToPresentationUseCase(result.forecast, result.city)
                 showWeather(weather.current, weather.daily)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (e: CityNotFoundException) {
                 showError(WeatherUiError.CityNotFound, R.string.city_not_found)
             } catch (e: HttpException) {
                 showError(WeatherUiError.CityNotFound, R.string.city_not_found)
+            } catch (e: OfflineException) {
+                showError(WeatherUiError.Offline, R.string.offline_error)
             } catch (e: Exception) {
                 showError(WeatherUiError.Location, R.string.location_error)
             }
@@ -63,18 +69,34 @@ class MainViewModel(
     fun requestCurrentLocationWeather() {
         viewModelScope.launch {
             startLoading()
+            val location = try {
+                getCurrentLocationUseCase()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (permissionFailure: SecurityException) {
+                showError(WeatherUiError.LocationPermissionDenied, R.string.location_permission_denied)
+                return@launch
+            } catch (offline: OfflineException) {
+                showError(WeatherUiError.Offline, R.string.offline_error)
+                return@launch
+            } catch (locationFailure: Exception) {
+                showError(WeatherUiError.Location, R.string.location_error)
+                return@launch
+            }
+
             try {
-                val location = getCurrentLocationUseCase()
                 val response = getCurrentWeatherUseCase(
                     location.latitude.toString(),
                     location.longitude.toString()
                 )
                 val weather = mapWeatherForecastToPresentationUseCase(response, location.placeName)
                 showWeather(weather.current, weather.daily)
-            } catch (e: SecurityException) {
-                showError(WeatherUiError.LocationPermissionDenied, R.string.location_permission_denied)
-            } catch (e: Exception) {
-                showError(WeatherUiError.Location, R.string.location_error)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (offline: OfflineException) {
+                showError(WeatherUiError.Offline, R.string.offline_error)
+            } catch (weatherFailure: Exception) {
+                showError(WeatherUiError.Weather, R.string.weather_error)
             }
         }
     }

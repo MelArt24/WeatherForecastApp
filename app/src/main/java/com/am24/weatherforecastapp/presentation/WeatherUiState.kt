@@ -26,6 +26,8 @@ enum class WeatherUiStatus {
 
 enum class WeatherUiError {
     Location,
+    Weather,
+    Offline,
     CityNotFound,
     LocationPermissionDenied
 }
