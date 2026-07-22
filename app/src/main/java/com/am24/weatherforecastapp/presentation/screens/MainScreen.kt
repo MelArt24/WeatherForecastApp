@@ -46,7 +46,7 @@ fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
                 is WeatherUiEvent.ShowError -> {
                     Toast.makeText(
                         context,
-                        context.getString(event.messageResId),
+                        context.getString(event.error.messageResource()),
                         Toast.LENGTH_SHORT
                     ).show()
                 }

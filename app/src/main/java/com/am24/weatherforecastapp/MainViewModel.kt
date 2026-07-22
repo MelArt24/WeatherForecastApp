@@ -4,13 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
-import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
+import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
-import com.am24.weatherforecastapp.domain.error.ApiErrorReason
 import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
-import com.am24.weatherforecastapp.domain.error.LocationErrorReason
-import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
@@ -34,7 +31,7 @@ class MainViewModel(
     private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
     private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
     private val searchCityWeatherUseCase: SearchCityWeatherUseCase,
-    private val mapWeatherForecastToPresentationUseCase: MapWeatherForecastToPresentationUseCase
+    private val weatherPresentationMapper: WeatherPresentationMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeatherUiState())
@@ -52,20 +49,14 @@ class MainViewModel(
             startLoading()
             try {
                 val result = searchCityWeatherUseCase(city)
-                val weather = mapWeatherForecastToPresentationUseCase(result.forecast, result.city)
+                val weather = weatherPresentationMapper(result.forecast, result.city)
                 showWeather(weather.current, weather.daily)
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: DomainFailureException) {
-                when (failure.error) {
-                    DomainError.Api(ApiErrorReason.NotFound, null) ->
-                        showError(WeatherUiError.CityNotFound, R.string.city_not_found)
-                    DomainError.Network(NetworkErrorReason.Offline) ->
-                        showError(WeatherUiError.Offline, R.string.offline_error)
-                    else -> showError(WeatherUiError.Location, R.string.location_error)
-                }
+                showError(WeatherUiError.CitySearch(failure.error))
             } catch (e: Exception) {
-                showError(WeatherUiError.Location, R.string.location_error)
+                showError(WeatherUiError.CitySearch(DomainError.Unknown))
             }
         }
     }
@@ -78,19 +69,10 @@ class MainViewModel(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: DomainFailureException) {
-                when (failure.error) {
-                    DomainError.Location(LocationErrorReason.PermissionDenied) ->
-                        showError(
-                            WeatherUiError.LocationPermissionDenied,
-                            R.string.location_permission_denied
-                        )
-                    DomainError.Network(NetworkErrorReason.Offline) ->
-                        showError(WeatherUiError.Offline, R.string.offline_error)
-                    else -> showError(WeatherUiError.Location, R.string.location_error)
-                }
+                showError(WeatherUiError.Location(failure.error))
                 return@launch
             } catch (locationFailure: Exception) {
-                showError(WeatherUiError.Location, R.string.location_error)
+                showError(WeatherUiError.Location(DomainError.Unknown))
                 return@launch
             }
 
@@ -99,18 +81,14 @@ class MainViewModel(
                     location.latitude.toString(),
                     location.longitude.toString()
                 )
-                val weather = mapWeatherForecastToPresentationUseCase(response, location.placeName)
+                val weather = weatherPresentationMapper(response, location.placeName)
                 showWeather(weather.current, weather.daily)
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: DomainFailureException) {
-                if (failure.error == DomainError.Network(NetworkErrorReason.Offline)) {
-                    showError(WeatherUiError.Offline, R.string.offline_error)
-                } else {
-                    showError(WeatherUiError.Weather, R.string.weather_error)
-                }
+                showError(WeatherUiError.Weather(failure.error))
             } catch (weatherFailure: Exception) {
-                showError(WeatherUiError.Weather, R.string.weather_error)
+                showError(WeatherUiError.Weather(DomainError.Unknown))
             }
         }
     }
@@ -136,9 +114,9 @@ class MainViewModel(
         }
     }
 
-    private suspend fun showError(error: WeatherUiError, messageResId: Int) {
+    private suspend fun showError(error: WeatherUiError) {
         _uiState.update { it.copy(status = WeatherUiStatus.Error, error = error) }
-        _events.send(WeatherUiEvent.ShowError(messageResId))
+        _events.send(WeatherUiEvent.ShowError(error))
     }
 
 }

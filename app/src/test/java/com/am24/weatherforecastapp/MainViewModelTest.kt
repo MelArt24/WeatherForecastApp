@@ -7,6 +7,7 @@ import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.model.UserLocation
 import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.ApiErrorReason
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.error.LocationErrorReason
 import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
@@ -15,7 +16,7 @@ import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
-import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
+import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
@@ -193,9 +194,12 @@ class MainViewModelTest {
         viewModel.requestCityWeather("Unknown place")
         advanceUntilIdle()
 
-        assertEquals(WeatherUiError.CityNotFound, viewModel.uiState.value.error)
+        val expectedError = WeatherUiError.CitySearch(
+            DomainError.Api(ApiErrorReason.NotFound)
+        )
+        assertEquals(expectedError, viewModel.uiState.value.error)
         assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
-        assertEquals(WeatherUiEvent.ShowError(R.string.city_not_found), event.await())
+        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
     }
 
     @Test
@@ -218,9 +222,10 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
-        assertEquals(WeatherUiError.Weather, viewModel.uiState.value.error)
+        val expectedError = WeatherUiError.Weather(DomainError.Unknown)
+        assertEquals(expectedError, viewModel.uiState.value.error)
         assertFalse(viewModel.uiState.value.isLoading)
-        assertEquals(WeatherUiEvent.ShowError(R.string.weather_error), event.await())
+        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
     }
 
     @Test
@@ -235,8 +240,11 @@ class MainViewModelTest {
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
 
-        assertEquals(WeatherUiError.Offline, viewModel.uiState.value.error)
-        assertEquals(WeatherUiEvent.ShowError(R.string.offline_error), event.await())
+        val expectedError = WeatherUiError.Weather(
+            DomainError.Network(NetworkErrorReason.Offline)
+        )
+        assertEquals(expectedError, viewModel.uiState.value.error)
+        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
     }
 
     @Test
@@ -257,9 +265,12 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
-        assertEquals(WeatherUiError.LocationPermissionDenied, viewModel.uiState.value.error)
+        val expectedError = WeatherUiError.Location(
+            DomainError.Location(LocationErrorReason.PermissionDenied)
+        )
+        assertEquals(expectedError, viewModel.uiState.value.error)
         assertEquals(
-            WeatherUiEvent.ShowError(R.string.location_permission_denied),
+            WeatherUiEvent.ShowError(expectedError),
             event.await()
         )
     }
@@ -295,8 +306,9 @@ class MainViewModelTest {
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
 
-        assertEquals(WeatherUiError.Location, viewModel.uiState.value.error)
-        assertEquals(WeatherUiEvent.ShowError(R.string.location_error), event.await())
+        val expectedError = WeatherUiError.Location(DomainError.Unknown)
+        assertEquals(expectedError, viewModel.uiState.value.error)
+        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
     }
 
     @Test
@@ -307,7 +319,7 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-                WeatherUiEvent.ShowError(R.string.weather_error),
+            WeatherUiEvent.ShowError(WeatherUiError.Weather(DomainError.Unknown)),
             viewModel.events.first()
         )
         val secondCollector = async { viewModel.events.first() }
@@ -336,7 +348,7 @@ class MainViewModelTest {
         GetCurrentWeatherUseCase(repository),
         GetCurrentLocationUseCase(locationRepository),
         SearchCityWeatherUseCase(repository, geocodingRepository),
-        MapWeatherForecastToPresentationUseCase(
+        WeatherPresentationMapper(
             conditionLocalizer = { _, fallback -> fallback },
             clock = Clock.fixed(Instant.parse("2026-07-05T12:34:00Z"), ZoneOffset.UTC)
         )

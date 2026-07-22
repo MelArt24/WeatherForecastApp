@@ -1,23 +1,20 @@
-package com.am24.weatherforecastapp.domain.usecase
+package com.am24.weatherforecastapp.presentation.mapper
 
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
-import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherConditionLocalizer
+import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Clock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-class MapWeatherForecastToPresentationUseCase(
+class WeatherPresentationMapper(
     private val conditionLocalizer: WeatherConditionLocalizer,
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
-    operator fun invoke(
-        forecast: WeatherForecast,
-        city: String?
-    ): WeatherPresentationResult {
+    operator fun invoke(forecast: WeatherForecast, city: String?): WeatherPresentationResult {
         val cityName = city ?: forecast.cityName ?: "Your city"
         val hourlyJson = createHourlyJson(forecast.hourly)
         val daily = forecast.daily.map { day ->
@@ -32,7 +29,6 @@ class MapWeatherForecastToPresentationUseCase(
                 hours = hourlyJson
             )
         }
-
         val current = daily.firstOrNull()?.let { firstDay ->
             WeatherModel(
                 city = cityName,
@@ -48,11 +44,7 @@ class MapWeatherForecastToPresentationUseCase(
                 hours = firstDay.hours
             )
         }
-
-        return WeatherPresentationResult(
-            current = current,
-            daily = daily
-        )
+        return WeatherPresentationResult(current = current, daily = daily)
     }
 
     private fun createHourlyJson(hourlyData: List<HourlyWeather>): String {
@@ -72,3 +64,8 @@ class MapWeatherForecastToPresentationUseCase(
         val CURRENT_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     }
 }
+
+data class WeatherPresentationResult(
+    val current: WeatherModel?,
+    val daily: List<WeatherModel>
+)

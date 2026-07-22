@@ -5,7 +5,7 @@ import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.WeatherCondition
-import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
+import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -15,7 +15,7 @@ import java.time.Instant
 import java.time.ZoneId
 
 class MapWeatherForecastToPresentationUseCaseTest {
-    private val useCase = MapWeatherForecastToPresentationUseCase(
+    private val useCase = WeatherPresentationMapper(
         conditionLocalizer = { condition, fallback ->
             if (condition == WeatherCondition.Unknown) fallback else "localized:$condition"
         },

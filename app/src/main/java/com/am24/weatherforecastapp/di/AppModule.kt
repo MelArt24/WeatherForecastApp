@@ -76,7 +76,7 @@ val appModule = module {
             getCurrentWeatherUseCase = get(),
             getCurrentLocationUseCase = get(),
             searchCityWeatherUseCase = get(),
-            mapWeatherForecastToPresentationUseCase = get()
+            weatherPresentationMapper = get()
         )
     }
 }
