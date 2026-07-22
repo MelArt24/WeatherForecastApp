@@ -20,6 +20,9 @@ sealed interface DomainError {
     data object Unknown : DomainError
 }
 
+/** Carries a domain failure through suspending APIs without leaking its technical cause. */
+class DomainFailureException(val error: DomainError) : Exception()
+
 enum class NetworkErrorReason {
     Offline,
     Timeout,

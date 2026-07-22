@@ -12,7 +12,9 @@ import com.am24.weatherforecastapp.data.remote.WeatherApiService
 import com.am24.weatherforecastapp.data.remote.WeatherResponseDto
 import com.am24.weatherforecastapp.data.repository.WeatherRepositoryImpl
 import com.am24.weatherforecastapp.domain.model.CurrentWeather
-import com.am24.weatherforecastapp.domain.OfflineException
+import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.weatherConditionFromIcon
 import java.io.IOException
@@ -63,13 +65,19 @@ class WeatherRepositoryImplTest {
         assertEquals(0, api.calls)
     }
 
-    @Test(expected = OfflineException::class)
+    @Test
     fun offlineWithoutCache_failsWithoutRemoteRequest() = runTest {
         val api = FakeApi(dto("remote", 20.0))
 
-        repository(api, FakeLocalDataSource(), online = false).getWeatherData("1", "2", null)
+        val thrown = captureFailure {
+            repository(api, FakeLocalDataSource(), online = false).getWeatherData("1", "2", null)
+        }
 
         assertEquals(0, api.calls)
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.Offline),
+            (thrown as DomainFailureException).error
+        )
     }
 
     @Test
@@ -96,7 +104,7 @@ class WeatherRepositoryImplTest {
     }
 
     @Test
-    fun remoteFailureWithoutCache_preservesOriginalFailure() = runTest {
+    fun remoteFailureWithoutCache_mapsFailure() = runTest {
         val failure = IOException("offline")
         var thrown: Throwable? = null
         try {
@@ -106,7 +114,10 @@ class WeatherRepositoryImplTest {
             thrown = error
         }
 
-        assertSame(failure, thrown)
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.ConnectionFailed),
+            (thrown as DomainFailureException).error
+        )
     }
 
     @Test
@@ -159,6 +170,13 @@ class WeatherRepositoryImplTest {
         apiKey = "key",
         timezone = "UTC"
     )
+
+    private suspend fun captureFailure(block: suspend () -> Unit): Throwable? = try {
+        block()
+        null
+    } catch (failure: Throwable) {
+        failure
+    }
 
     private class FakeLocalDataSource(var cached: CachedWeather? = null) : WeatherLocalDataSource {
         var readKey: String? = null

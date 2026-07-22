@@ -1,5 +1,6 @@
 package com.am24.weatherforecastapp.data.mapper
 
+import com.am24.weatherforecastapp.data.error.InvalidWeatherResponseException
 import com.am24.weatherforecastapp.data.remote.CurrentWeatherDto
 import com.am24.weatherforecastapp.data.remote.DailyDataDto
 import com.am24.weatherforecastapp.data.remote.DailyForecastDto
@@ -13,6 +14,12 @@ import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.weatherConditionFromIcon
 
 fun WeatherResponseDto.toDomain(): WeatherForecast {
+    if (
+        lat.isBlank() || lon.isBlank() || timezone.isBlank() || units.isBlank() ||
+        current.summary.isBlank() || !current.temperature.isFinite()
+    ) {
+        throw InvalidWeatherResponseException()
+    }
     return WeatherForecast(
         cityName = this.placeId,
         current = current.toDomain(),

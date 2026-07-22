@@ -2,12 +2,15 @@ package com.am24.weatherforecastapp.data.repository
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
+import com.am24.weatherforecastapp.data.error.toLocationDomainError
 import com.am24.weatherforecastapp.domain.model.UserLocation
 import com.am24.weatherforecastapp.domain.model.SavedLocation
 import com.am24.weatherforecastapp.data.local.SavedLocationLocalDataSource
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
+import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.error.LocationErrorReason
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -29,7 +32,13 @@ class LocationRepositoryImpl(
      * Requires location permission to be granted before invocation.
      */
     override suspend fun getCurrentLocation(): UserLocation {
-        val coordinates = getCoordinates()
+        val coordinates = try {
+            getCoordinates()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            throw DomainFailureException(failure.toLocationDomainError())
+        }
         val placeName = try {
             geocodingRepository.resolvePlaceName(
                 latitude = coordinates.latitude,
@@ -76,9 +85,9 @@ class LocationRepositoryImpl(
                     .addOnSuccessListener { location ->
                         if (!continuation.isActive) return@addOnSuccessListener
                         if (location == null) {
-                            continuation.resumeWithException(
-                                IllegalStateException("Current location is unavailable")
-                            )
+                            continuation.resumeWithException(DomainFailureException(
+                                DomainError.Location(LocationErrorReason.Unavailable)
+                            ))
                         } else {
                             continuation.resume(
                                 LocationCoordinates(location.latitude, location.longitude)

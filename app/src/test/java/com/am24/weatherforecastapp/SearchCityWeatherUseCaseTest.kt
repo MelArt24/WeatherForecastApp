@@ -6,7 +6,7 @@ import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import com.am24.weatherforecastapp.data.network.NetworkMonitor
-import com.am24.weatherforecastapp.domain.CityNotFoundException
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -42,7 +42,7 @@ class SearchCityWeatherUseCaseTest {
         assertEquals("РљРёС—РІ РјС–СЃС‚Рѕ", result.city)
     }
 
-    @Test(expected = CityNotFoundException::class)
+    @Test(expected = DomainFailureException::class)
     fun missingGeocodingResult_producesCityNotFound() = runTest {
         SearchCityWeatherUseCase(
             FakeWeatherRepository(),
@@ -50,7 +50,7 @@ class SearchCityWeatherUseCaseTest {
         )("РќРµРІС–РґРѕРјРµ РјС–СЃС†Рµ")
     }
 
-    @Test(expected = CityNotFoundException::class)
+    @Test(expected = DomainFailureException::class)
     fun blankQuery_producesCityNotFound() = runTest {
         SearchCityWeatherUseCase(
             FakeWeatherRepository(),

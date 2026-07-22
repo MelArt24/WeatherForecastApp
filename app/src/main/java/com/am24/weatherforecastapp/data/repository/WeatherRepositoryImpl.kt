@@ -1,14 +1,19 @@
 package com.am24.weatherforecastapp.data.repository
 
 import com.am24.weatherforecastapp.data.mapper.toDomain
+import com.am24.weatherforecastapp.data.error.toWeatherDomainError
 import com.am24.weatherforecastapp.data.cache.TimeProvider
 import com.am24.weatherforecastapp.data.cache.WeatherCacheKeyFactory
 import com.am24.weatherforecastapp.data.cache.WeatherCachePolicy
 import com.am24.weatherforecastapp.data.local.WeatherLocalDataSource
 import com.am24.weatherforecastapp.data.network.NetworkMonitor
+import com.am24.weatherforecastapp.data.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.data.remote.WeatherApiService
-import com.am24.weatherforecastapp.domain.OfflineException
+import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.ApiErrorReason
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
@@ -30,13 +35,19 @@ class WeatherRepositoryImpl(
         lon: String?,
         city: String?
     ): WeatherForecast {
-        val cacheKey = WeatherCacheKeyFactory.create(lat, lon, city)
+        val cacheKey = try {
+            WeatherCacheKeyFactory.create(lat, lon, city)
+        } catch (_: Exception) {
+            throw DomainFailureException(DomainError.Api(ApiErrorReason.RequestFailed))
+        }
 
         return mutexFor(cacheKey).withLock {
             val cached = readCache(cacheKey)
 
-            if (!networkMonitor.isOnline()) {
-                return@withLock cached?.forecast ?: throw OfflineException()
+            if (!networkMonitor.isOnlineOrDomainFailure()) {
+                return@withLock cached?.forecast ?: throw DomainFailureException(
+                    DomainError.Network(NetworkErrorReason.Offline)
+                )
             }
 
             val now = timeProvider.currentTimeMillis()
@@ -60,7 +71,7 @@ class WeatherRepositoryImpl(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (remoteFailure: Exception) {
-                cached?.forecast ?: throw remoteFailure
+                cached?.forecast ?: throw DomainFailureException(remoteFailure.toWeatherDomainError())
             }
         }
     }

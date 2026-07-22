@@ -1,8 +1,11 @@
 package com.am24.weatherforecastapp.domain.usecase
 
-import com.am24.weatherforecastapp.domain.CityNotFoundException
+import com.am24.weatherforecastapp.domain.error.ApiErrorReason
+import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.CityWeatherResult
 import com.am24.weatherforecastapp.data.network.NetworkMonitor
+import com.am24.weatherforecastapp.data.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 
@@ -13,9 +16,11 @@ class SearchCityWeatherUseCase(
 ) {
     suspend operator fun invoke(city: String): CityWeatherResult {
         val normalizedQuery = city.trim().replace(Regex("\\s+"), " ")
-        if (normalizedQuery.isEmpty()) throw CityNotFoundException()
+        if (normalizedQuery.isEmpty()) throw DomainFailureException(
+            DomainError.Api(ApiErrorReason.RequestFailed)
+        )
 
-        if (!networkMonitor.isOnline()) {
+        if (!networkMonitor.isOnlineOrDomainFailure()) {
             return CityWeatherResult(
                 forecast = weatherRepository.getWeatherData(city = normalizedQuery),
                 city = normalizedQuery
@@ -23,7 +28,7 @@ class SearchCityWeatherUseCase(
         }
 
         val location = geocodingRepository.searchLocation(normalizedQuery)
-            ?: throw CityNotFoundException()
+            ?: throw DomainFailureException(DomainError.Api(ApiErrorReason.NotFound))
         val forecast = weatherRepository.getWeatherData(
             lat = location.latitude.toString(),
             lon = location.longitude.toString(),

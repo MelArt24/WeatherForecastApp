@@ -6,8 +6,11 @@ import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.usecase.MapWeatherForecastToPresentationUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
-import com.am24.weatherforecastapp.domain.CityNotFoundException
-import com.am24.weatherforecastapp.domain.OfflineException
+import com.am24.weatherforecastapp.domain.error.ApiErrorReason
+import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.error.LocationErrorReason
+import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
@@ -22,7 +25,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
-import retrofit2.HttpException
 
 /**
  * ViewModel — це "спільна пам'ять" для всіх фрагментів додатка.
@@ -54,12 +56,14 @@ class MainViewModel(
                 showWeather(weather.current, weather.daily)
             } catch (cancellation: CancellationException) {
                 throw cancellation
-            } catch (e: CityNotFoundException) {
-                showError(WeatherUiError.CityNotFound, R.string.city_not_found)
-            } catch (e: HttpException) {
-                showError(WeatherUiError.CityNotFound, R.string.city_not_found)
-            } catch (e: OfflineException) {
-                showError(WeatherUiError.Offline, R.string.offline_error)
+            } catch (failure: DomainFailureException) {
+                when (failure.error) {
+                    DomainError.Api(ApiErrorReason.NotFound, null) ->
+                        showError(WeatherUiError.CityNotFound, R.string.city_not_found)
+                    DomainError.Network(NetworkErrorReason.Offline) ->
+                        showError(WeatherUiError.Offline, R.string.offline_error)
+                    else -> showError(WeatherUiError.Location, R.string.location_error)
+                }
             } catch (e: Exception) {
                 showError(WeatherUiError.Location, R.string.location_error)
             }
@@ -73,11 +77,17 @@ class MainViewModel(
                 getCurrentLocationUseCase()
             } catch (cancellation: CancellationException) {
                 throw cancellation
-            } catch (permissionFailure: SecurityException) {
-                showError(WeatherUiError.LocationPermissionDenied, R.string.location_permission_denied)
-                return@launch
-            } catch (offline: OfflineException) {
-                showError(WeatherUiError.Offline, R.string.offline_error)
+            } catch (failure: DomainFailureException) {
+                when (failure.error) {
+                    DomainError.Location(LocationErrorReason.PermissionDenied) ->
+                        showError(
+                            WeatherUiError.LocationPermissionDenied,
+                            R.string.location_permission_denied
+                        )
+                    DomainError.Network(NetworkErrorReason.Offline) ->
+                        showError(WeatherUiError.Offline, R.string.offline_error)
+                    else -> showError(WeatherUiError.Location, R.string.location_error)
+                }
                 return@launch
             } catch (locationFailure: Exception) {
                 showError(WeatherUiError.Location, R.string.location_error)
@@ -93,8 +103,12 @@ class MainViewModel(
                 showWeather(weather.current, weather.daily)
             } catch (cancellation: CancellationException) {
                 throw cancellation
-            } catch (offline: OfflineException) {
-                showError(WeatherUiError.Offline, R.string.offline_error)
+            } catch (failure: DomainFailureException) {
+                if (failure.error == DomainError.Network(NetworkErrorReason.Offline)) {
+                    showError(WeatherUiError.Offline, R.string.offline_error)
+                } else {
+                    showError(WeatherUiError.Weather, R.string.weather_error)
+                }
             } catch (weatherFailure: Exception) {
                 showError(WeatherUiError.Weather, R.string.weather_error)
             }

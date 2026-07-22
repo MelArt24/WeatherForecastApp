@@ -6,7 +6,10 @@ import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.model.UserLocation
-import com.am24.weatherforecastapp.domain.OfflineException
+import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.error.LocationErrorReason
+import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
@@ -223,7 +226,9 @@ class MainViewModelTest {
     @Test
     fun offlineRequestWithoutCache_showsOfflineError() = runTest(testDispatcher) {
         val viewModel = viewModel(
-            FakeWeatherRepository(response = { throw OfflineException() })
+            FakeWeatherRepository(response = {
+                throw DomainFailureException(DomainError.Network(NetworkErrorReason.Offline))
+            })
         )
         val event = async { viewModel.events.first() }
 
@@ -238,7 +243,9 @@ class MainViewModelTest {
     fun missingLocationPermission_setsPermissionError() = runTest(testDispatcher) {
         val locationRepository = object : LocationRepository {
             override suspend fun getCurrentLocation(): UserLocation {
-                throw SecurityException("Permission denied")
+                throw DomainFailureException(
+                    DomainError.Location(LocationErrorReason.PermissionDenied)
+                )
             }
             override suspend fun getLastSavedLocation(): UserLocation? = null
             override suspend fun saveLastLocation(location: UserLocation) = Unit

@@ -7,6 +7,10 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
+import com.am24.weatherforecastapp.data.error.toLocationDomainError
+import com.am24.weatherforecastapp.domain.error.DomainError
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.error.LocationErrorReason
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -18,7 +22,7 @@ class GeocodingRepositoryImpl(
 ) : GeocodingRepository {
 
     override suspend fun searchLocation(query: String): GeocodedLocation? {
-        if (!Geocoder.isPresent()) return null
+        if (!Geocoder.isPresent()) throw providerUnavailable()
         val address = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 searchAsync(query)
@@ -27,8 +31,8 @@ class GeocodingRepositoryImpl(
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
-        } catch (_: Exception) {
-            null
+        } catch (failure: Exception) {
+            throw DomainFailureException(failure.toLocationDomainError())
         }
 
         return address?.let {
@@ -41,7 +45,7 @@ class GeocodingRepositoryImpl(
     }
 
     override suspend fun resolvePlaceName(latitude: Double, longitude: Double): String? {
-        if (!Geocoder.isPresent()) return null
+        if (!Geocoder.isPresent()) throw providerUnavailable()
         val address = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 reverseAsync(latitude, longitude)
@@ -50,8 +54,8 @@ class GeocodingRepositoryImpl(
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
-        } catch (_: Exception) {
-            null
+        } catch (failure: Exception) {
+            throw DomainFailureException(failure.toLocationDomainError())
         }
         return address?.resolvePlaceName()
     }
@@ -59,6 +63,10 @@ class GeocodingRepositoryImpl(
     private fun geocoder(): Geocoder = Geocoder(
         context.applicationContext,
         context.resources.configuration.locales[0]
+    )
+
+    private fun providerUnavailable() = DomainFailureException(
+        DomainError.Location(LocationErrorReason.Unavailable)
     )
 
     private fun Address.resolvePlaceName(): String? =
