@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 
@@ -40,64 +41,97 @@ class MainViewModel(
     private val _events = Channel<WeatherUiEvent>(Channel.BUFFERED)
     val events: Flow<WeatherUiEvent> = _events.receiveAsFlow()
 
+    private var weatherRequestJob: Job? = null
+    private var requestId = 0L
+
     fun setSelectedDay(item: WeatherModel) {
         _uiState.update { it.copy(selectedDay = item) }
     }
 
     fun requestCityWeather(city: String) {
-        viewModelScope.launch {
-            startLoading()
+        val id = beginRequest(Operation.CitySearch)
+        weatherRequestJob = viewModelScope.launch {
             try {
                 val result = searchCityWeatherUseCase(city)
                 val weather = weatherPresentationMapper(result.forecast, result.city)
-                showWeather(weather.current, weather.daily)
+                showWeather(id, weather.current, weather.daily)
             } catch (cancellation: CancellationException) {
+                clearCancelledRequest(id)
                 throw cancellation
             } catch (failure: DomainFailureException) {
-                showError(WeatherUiError.CitySearch(failure.error))
+                showError(id, WeatherUiError.CitySearch(failure.error))
             } catch (e: Exception) {
-                showError(WeatherUiError.CitySearch(DomainError.Unknown))
+                showError(id, WeatherUiError.CitySearch(DomainError.Unknown))
+            } finally {
+                finishRequest(id)
             }
         }
     }
 
     fun requestCurrentLocationWeather() {
-        viewModelScope.launch {
-            startLoading()
+        val id = beginRequest(Operation.Location)
+        weatherRequestJob = viewModelScope.launch {
             val location = try {
                 getCurrentLocationUseCase()
             } catch (cancellation: CancellationException) {
+                clearCancelledRequest(id)
                 throw cancellation
             } catch (failure: DomainFailureException) {
-                showError(WeatherUiError.Location(failure.error))
+                showError(id, WeatherUiError.Location(failure.error))
+                finishRequest(id)
                 return@launch
             } catch (locationFailure: Exception) {
-                showError(WeatherUiError.Location(DomainError.Unknown))
+                showError(id, WeatherUiError.Location(DomainError.Unknown))
+                finishRequest(id)
                 return@launch
             }
 
             try {
+                startWeatherLoading(id)
                 val response = getCurrentWeatherUseCase(
                     location.latitude.toString(),
                     location.longitude.toString()
                 )
                 val weather = weatherPresentationMapper(response, location.placeName)
-                showWeather(weather.current, weather.daily)
+                showWeather(id, weather.current, weather.daily)
             } catch (cancellation: CancellationException) {
+                clearCancelledRequest(id)
                 throw cancellation
             } catch (failure: DomainFailureException) {
-                showError(WeatherUiError.Weather(failure.error))
+                showError(id, WeatherUiError.Weather(failure.error))
             } catch (weatherFailure: Exception) {
-                showError(WeatherUiError.Weather(DomainError.Unknown))
+                showError(id, WeatherUiError.Weather(DomainError.Unknown))
+            } finally {
+                finishRequest(id)
             }
         }
     }
 
-    private fun startLoading() {
-        _uiState.update { it.copy(status = WeatherUiStatus.Loading, error = null) }
+    private fun beginRequest(operation: Operation): Long {
+        weatherRequestJob?.cancel()
+        val id = ++requestId
+        _uiState.update { state ->
+            state.copy(
+                status = if (state.hasWeather) state.status else WeatherUiStatus.Loading,
+                error = null,
+                isRefreshing = state.hasWeather,
+                isCitySearchLoading = operation == Operation.CitySearch,
+                isLocationLoading = operation == Operation.Location,
+                isWeatherLoading = false
+            )
+        }
+        return id
     }
 
-    private fun showWeather(current: WeatherModel?, daily: List<WeatherModel>) {
+    private fun startWeatherLoading(id: Long) {
+        if (id != requestId) return
+        _uiState.update {
+            it.copy(isLocationLoading = false, isWeatherLoading = true)
+        }
+    }
+
+    private fun showWeather(id: Long, current: WeatherModel?, daily: List<WeatherModel>) {
+        if (id != requestId) return
         val status = if (current == null && daily.isEmpty()) {
             WeatherUiStatus.Empty
         } else {
@@ -109,14 +143,64 @@ class MainViewModel(
                 currentWeather = current,
                 dailyWeather = daily,
                 selectedDay = null,
-                error = null
+                error = null,
+                isRefreshing = false,
+                isCitySearchLoading = false,
+                isLocationLoading = false,
+                isWeatherLoading = false
             )
         }
     }
 
-    private suspend fun showError(error: WeatherUiError) {
-        _uiState.update { it.copy(status = WeatherUiStatus.Error, error = error) }
+    private suspend fun showError(id: Long, error: WeatherUiError) {
+        if (id != requestId) return
+        _uiState.update { state ->
+            if (state.hasWeather) {
+                state.copy(error = null, isRefreshing = false)
+            } else {
+                state.copy(
+                    status = WeatherUiStatus.Error,
+                    error = error,
+                    isRefreshing = false
+                )
+            }
+        }
         _events.send(WeatherUiEvent.ShowError(error))
+    }
+
+    private fun clearCancelledRequest(id: Long) {
+        if (id != requestId) return
+        _uiState.update { state ->
+            state.copy(
+                status = if (state.status == WeatherUiStatus.Loading) {
+                    WeatherUiStatus.Initial
+                } else {
+                    state.status
+                },
+                error = null,
+                isRefreshing = false,
+                isCitySearchLoading = false,
+                isLocationLoading = false,
+                isWeatherLoading = false
+            )
+        }
+    }
+
+    private fun finishRequest(id: Long) {
+        if (id != requestId) return
+        _uiState.update {
+            it.copy(
+                isRefreshing = false,
+                isCitySearchLoading = false,
+                isLocationLoading = false,
+                isWeatherLoading = false
+            )
+        }
+    }
+
+    private enum class Operation {
+        CitySearch,
+        Location
     }
 
 }

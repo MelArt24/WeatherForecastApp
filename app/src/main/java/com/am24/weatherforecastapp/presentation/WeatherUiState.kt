@@ -12,10 +12,17 @@ data class WeatherUiState(
     val currentWeather: WeatherModel? = null,
     val dailyWeather: List<WeatherModel> = emptyList(),
     val selectedDay: WeatherModel? = null,
-    val error: WeatherUiError? = null
+    val error: WeatherUiError? = null,
+    val isRefreshing: Boolean = false,
+    val isCitySearchLoading: Boolean = false,
+    val isLocationLoading: Boolean = false,
+    val isWeatherLoading: Boolean = false
 ) {
     val isLoading: Boolean
         get() = status == WeatherUiStatus.Loading
+
+    val hasWeather: Boolean
+        get() = currentWeather != null || dailyWeather.isNotEmpty()
 
     val displayedWeather: WeatherModel?
         get() = selectedDay ?: currentWeather

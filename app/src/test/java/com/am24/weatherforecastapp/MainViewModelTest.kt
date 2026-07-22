@@ -24,9 +24,12 @@ import com.am24.weatherforecastapp.presentation.WeatherUiState
 import com.am24.weatherforecastapp.presentation.WeatherUiStatus
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -226,6 +229,197 @@ class MainViewModelTest {
         assertEquals(expectedError, viewModel.uiState.value.error)
         assertFalse(viewModel.uiState.value.isLoading)
         assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
+    }
+
+    @Test
+    fun failedRefresh_keepsExistingWeatherAndUsesTransientError() = runTest(testDispatcher) {
+        var requestCount = 0
+        val viewModel = viewModel(
+            FakeWeatherRepository(response = {
+                if (requestCount++ == 0) successForecast() else throw DomainFailureException(
+                    DomainError.Network(NetworkErrorReason.Offline)
+                )
+            })
+        )
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+        val existingWeather = viewModel.uiState.value.currentWeather
+        val event = async { viewModel.events.first() }
+
+        viewModel.requestCurrentLocationWeather()
+        runCurrent()
+
+        assertSame(existingWeather, viewModel.uiState.value.currentWeather)
+        assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+        assertFalse(viewModel.uiState.value.isLoading)
+
+        advanceUntilIdle()
+
+        assertSame(existingWeather, viewModel.uiState.value.currentWeather)
+        assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+        assertNull(viewModel.uiState.value.error)
+        assertFalse(viewModel.uiState.value.isRefreshing)
+        assertEquals(
+            WeatherUiEvent.ShowError(
+                WeatherUiError.Weather(DomainError.Network(NetworkErrorReason.Offline))
+            ),
+            event.await()
+        )
+    }
+
+    @Test
+    fun initialDomainFailure_hasPersistentErrorAndClearsAllLoading() = runTest(testDispatcher) {
+        val failure = DomainError.Api(ApiErrorReason.RequestFailed)
+        val viewModel = viewModel(
+            FakeWeatherRepository(response = { throw DomainFailureException(failure) })
+        )
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertEquals(WeatherUiStatus.Error, status)
+            assertEquals(WeatherUiError.Weather(failure), error)
+            assertFalse(isLoading)
+            assertFalse(isRefreshing)
+            assertFalse(isLocationLoading)
+            assertFalse(isWeatherLoading)
+            assertFalse(isCitySearchLoading)
+        }
+    }
+
+    @Test
+    fun cachedFallback_isPresentedAsSuccessfulContent() = runTest(testDispatcher) {
+        val cachedForecast = successForecast().copy(cityName = "Cached Kyiv")
+        val viewModel = viewModel(FakeWeatherRepository(response = { cachedForecast }))
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertEquals(WeatherUiStatus.Success, status)
+            assertEquals("Kyiv", currentWeather?.city)
+            assertFalse(isLoading)
+            assertFalse(isRefreshing)
+            assertNull(error)
+        }
+    }
+
+    @Test
+    fun newerRequest_cannotBeOverwrittenByOlderNonCooperativeRequest() =
+        runTest(testDispatcher) {
+            val olderResponse = CompletableDeferred<WeatherForecast>()
+            var requestCount = 0
+            val viewModel = viewModel(
+                FakeWeatherRepository(response = {
+                    if (requestCount++ == 0) {
+                        withContext(NonCancellable) { olderResponse.await() }
+                    } else {
+                        successForecast().copy(cityName = "Newer")
+                    }
+                })
+            )
+
+            viewModel.requestCityWeather("Older")
+            runCurrent()
+            viewModel.requestCityWeather("Newer")
+            runCurrent()
+
+            assertEquals("Newer", viewModel.uiState.value.currentWeather?.city)
+            assertFalse(viewModel.uiState.value.isCitySearchLoading)
+
+            olderResponse.complete(successForecast().copy(cityName = "Older"))
+            advanceUntilIdle()
+
+            assertEquals("Newer", viewModel.uiState.value.currentWeather?.city)
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertFalse(viewModel.uiState.value.isCitySearchLoading)
+        }
+
+    @Test
+    fun operationLoadingFlags_changeIndependently() = runTest(testDispatcher) {
+        val location = CompletableDeferred<UserLocation>()
+        val weather = CompletableDeferred<WeatherForecast>()
+        val locationRepository = object : LocationRepository {
+            override suspend fun getCurrentLocation(): UserLocation = location.await()
+            override suspend fun getLastSavedLocation(): UserLocation? = null
+            override suspend fun saveLastLocation(location: UserLocation) = Unit
+        }
+        val viewModel = viewModel(
+            FakeWeatherRepository(response = { weather.await() }),
+            locationRepository
+        )
+
+        viewModel.requestCurrentLocationWeather()
+        runCurrent()
+        with(viewModel.uiState.value) {
+            assertTrue(isLocationLoading)
+            assertFalse(isWeatherLoading)
+            assertFalse(isCitySearchLoading)
+        }
+
+        location.complete(UserLocation(50.45, 30.52, "Kyiv"))
+        runCurrent()
+        with(viewModel.uiState.value) {
+            assertFalse(isLocationLoading)
+            assertTrue(isWeatherLoading)
+            assertFalse(isCitySearchLoading)
+        }
+
+        viewModel.requestCityWeather("Lviv")
+        runCurrent()
+        with(viewModel.uiState.value) {
+            assertFalse(isLocationLoading)
+            assertFalse(isWeatherLoading)
+            assertTrue(isCitySearchLoading)
+        }
+    }
+
+    @Test
+    fun cancellation_isNotRenderedAsErrorAndClearsLoading() = runTest(testDispatcher) {
+        val viewModel = viewModel(
+            FakeWeatherRepository(response = { throw CancellationException("cancelled") })
+        )
+        val event = async { viewModel.events.first() }
+
+        viewModel.requestCityWeather("Kyiv")
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertEquals(WeatherUiStatus.Initial, status)
+            assertNull(error)
+            assertFalse(isLoading)
+            assertFalse(isCitySearchLoading)
+        }
+        assertFalse(event.isCompleted)
+        event.cancel()
+    }
+
+    @Test
+    fun locationCancellation_clearsLocationLoadingWithoutError() = runTest(testDispatcher) {
+        val locationRepository = object : LocationRepository {
+            override suspend fun getCurrentLocation(): UserLocation {
+                throw CancellationException("cancelled")
+            }
+            override suspend fun getLastSavedLocation(): UserLocation? = null
+            override suspend fun saveLastLocation(location: UserLocation) = Unit
+        }
+        val viewModel = viewModel(FakeWeatherRepository(), locationRepository)
+        val event = async { viewModel.events.first() }
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+
+        with(viewModel.uiState.value) {
+            assertEquals(WeatherUiStatus.Initial, status)
+            assertNull(error)
+            assertFalse(isLoading)
+            assertFalse(isLocationLoading)
+            assertFalse(isWeatherLoading)
+        }
+        assertFalse(event.isCompleted)
+        event.cancel()
     }
 
     @Test

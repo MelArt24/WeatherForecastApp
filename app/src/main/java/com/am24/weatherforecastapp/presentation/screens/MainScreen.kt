@@ -88,7 +88,7 @@ fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
             WeatherTabs(
                 displayedWeather = uiState.displayedWeather,
                 dailyWeather = uiState.dailyWeather,
-                isLoading = uiState.isLoading,
+                isLoading = uiState.isLoading && !uiState.hasWeather,
                 onDayClick = viewModel::setSelectedDay
             )
         }
