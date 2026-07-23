@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    id("org.jetbrains.kotlinx.kover") version "0.9.8"
 }
 
 val localProperties = Properties().apply {
@@ -118,4 +119,21 @@ dependencies {
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "com.am24.weatherforecastapp.BuildConfig",
+                    "com.am24.weatherforecastapp.R",
+                    "com.am24.weatherforecastapp.R\$*",
+                    "com.am24.weatherforecastapp.*ComposableSingletons*",
+                    "com.am24.weatherforecastapp.data.local.*_Impl*",
+                    "com.am24.weatherforecastapp.presentation.theme.*"
+                )
+            }
+        }
+    }
 }
