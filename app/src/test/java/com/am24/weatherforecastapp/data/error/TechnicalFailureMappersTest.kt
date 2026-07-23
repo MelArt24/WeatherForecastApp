@@ -6,9 +6,13 @@ import com.am24.weatherforecastapp.domain.error.LocationErrorReason
 import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import java.net.ConnectException
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.io.IOException
+import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import kotlinx.serialization.SerializationException
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -31,8 +35,35 @@ class TechnicalFailureMappersTest {
     }
 
     @Test fun unauthorizedResponse_preservesSafeStatus() = assertHttp(401, ApiErrorReason.Unauthorized)
+    @Test fun forbiddenResponse_mapsToUnauthorized() = assertHttp(403, ApiErrorReason.Unauthorized)
+    @Test fun notFoundResponse_mapsToNotFound() = assertHttp(404, ApiErrorReason.NotFound)
     @Test fun rateLimitedResponse_preservesSafeStatus() = assertHttp(429, ApiErrorReason.RateLimited)
     @Test fun serverResponse_preservesSafeStatus() = assertHttp(503, ApiErrorReason.ServerError)
+    @Test fun genericHttpFailure_mapsToRequestFailed() = assertHttp(418, ApiErrorReason.RequestFailed)
+
+    @Test
+    fun unknownHost_mapsToNetworkConnectionFailed() {
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.ConnectionFailed),
+            UnknownHostException().toWeatherDomainError()
+        )
+    }
+
+    @Test
+    fun genericIoFailure_mapsToNetworkConnectionFailed() {
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.ConnectionFailed),
+            IOException().toWeatherDomainError()
+        )
+    }
+
+    @Test
+    fun existingDomainFailure_preservesMappedError() {
+        val error = DomainError.Api(ApiErrorReason.RateLimited, statusCode = 429)
+
+        assertSame(error, DomainFailureException(error).toWeatherDomainError())
+        assertSame(error, DomainFailureException(error).toLocationDomainError())
+    }
 
     @Test
     fun malformedResponse_mapsToInvalidResponse() {

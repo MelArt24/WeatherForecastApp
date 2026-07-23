@@ -566,6 +566,80 @@ class MainViewModelTest {
     }
 
     @Test
+    fun retryLastRequest_repeatsFailedCurrentLocationRequest() = runTest(testDispatcher) {
+        var locationRequests = 0
+        val locationError = DomainError.Location(LocationErrorReason.Unavailable)
+        val locationRepository = object : LocationRepository {
+            override suspend fun getCurrentLocation(): UserLocation {
+                locationRequests++
+                if (locationRequests == 1) throw DomainFailureException(locationError)
+                return UserLocation(50.45, 30.52, "Kyiv")
+            }
+
+            override suspend fun getLastSavedLocation(): UserLocation? = null
+            override suspend fun saveLastLocation(location: UserLocation) = Unit
+        }
+        val viewModel = viewModel(
+            FakeWeatherRepository(response = { successForecast() }),
+            locationRepository
+        )
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
+        assertEquals(WeatherUiError.Location(locationError), viewModel.uiState.value.error)
+
+        viewModel.retryLastRequest()
+        advanceUntilIdle()
+
+        assertEquals(2, locationRequests)
+        assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+        assertEquals("Kyiv", viewModel.uiState.value.currentWeather?.city)
+        assertNull(viewModel.uiState.value.error)
+        assertFalse(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun staleOlderFailure_doesNotReplaceSuccessEmitEventOrChangeLoading() =
+        runTest(testDispatcher) {
+            val olderRequest = CompletableDeferred<Unit>()
+            var requestCount = 0
+            val viewModel = viewModel(
+                FakeWeatherRepository(response = {
+                    if (requestCount++ == 0) {
+                        withContext(NonCancellable) { olderRequest.await() }
+                        throw DomainFailureException(
+                            DomainError.Api(ApiErrorReason.ServerError, statusCode = 503)
+                        )
+                    }
+                    successForecast().copy(cityName = "Newer")
+                })
+            )
+
+            viewModel.requestCityWeather("Older")
+            runCurrent()
+            viewModel.requestCityWeather("Newer")
+            runCurrent()
+
+            assertEquals("Newer", viewModel.uiState.value.currentWeather?.city)
+            assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+            assertFalse(viewModel.uiState.value.isCitySearchLoading)
+
+            val event = async { viewModel.events.first() }
+            runCurrent()
+            olderRequest.complete(Unit)
+            runCurrent()
+
+            assertEquals("Newer", viewModel.uiState.value.currentWeather?.city)
+            assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+            assertNull(viewModel.uiState.value.error)
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertFalse(viewModel.uiState.value.isRefreshing)
+            assertFalse(viewModel.uiState.value.isCitySearchLoading)
+            assertFalse(event.isCompleted)
+            event.cancel()
+        }
+
+    @Test
     fun selectedDay_updatesOnlySelection() {
         val viewModel = viewModel(FakeWeatherRepository())
         val selected = weatherModel("Tomorrow")

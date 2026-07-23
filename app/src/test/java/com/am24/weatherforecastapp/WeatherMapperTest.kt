@@ -1,6 +1,7 @@
 package com.am24.weatherforecastapp
 
 import com.am24.weatherforecastapp.data.mapper.toDomain
+import com.am24.weatherforecastapp.data.error.InvalidWeatherResponseException
 import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.data.remote.AllDayDataDto
@@ -11,6 +12,7 @@ import com.am24.weatherforecastapp.data.remote.HourlyDataDto
 import com.am24.weatherforecastapp.data.remote.HourlyForecastDto
 import com.am24.weatherforecastapp.data.remote.WeatherResponseDto
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class WeatherMapperTest {
@@ -250,4 +252,58 @@ class WeatherMapperTest {
         assertEquals(emptyList<DailyWeather>(), result.daily)
         assertEquals(emptyList<HourlyWeather>(), result.hourly)
     }
+
+    @Test
+    fun `WeatherResponseDto toDomain rejects blank required fields`() {
+        val valid = validResponse()
+        val invalidResponses = listOf(
+            valid.copy(lat = ""),
+            valid.copy(lon = " "),
+            valid.copy(timezone = ""),
+            valid.copy(units = " "),
+            valid.copy(current = valid.current.copy(summary = ""))
+        )
+
+        invalidResponses.forEach { dto ->
+            assertThrows(InvalidWeatherResponseException::class.java) { dto.toDomain() }
+        }
+    }
+
+    @Test
+    fun `WeatherResponseDto toDomain rejects non-finite current temperatures`() {
+        listOf(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY).forEach { value ->
+            val dto = validResponse().let { valid ->
+                valid.copy(current = valid.current.copy(temperature = value))
+            }
+
+            assertThrows(InvalidWeatherResponseException::class.java) { dto.toDomain() }
+        }
+    }
+
+    @Test
+    fun `WeatherResponseDto toDomain supports empty forecast collections`() {
+        val result = validResponse().copy(
+            hourly = HourlyForecastDto(emptyList()),
+            daily = DailyForecastDto(emptyList())
+        ).toDomain()
+
+        assertEquals(emptyList<HourlyWeather>(), result.hourly)
+        assertEquals(emptyList<DailyWeather>(), result.daily)
+    }
+
+    private fun validResponse() = WeatherResponseDto(
+        lat = "50.45",
+        lon = "30.52",
+        timezone = "Europe/Kyiv",
+        units = "metric",
+        placeId = "Kyiv",
+        current = CurrentWeatherDto(
+            summary = "Clear sky",
+            temperature = 21.5,
+            iconNum = 2,
+            icon = "clear"
+        ),
+        daily = DailyForecastDto(emptyList()),
+        hourly = HourlyForecastDto(emptyList())
+    )
 }
