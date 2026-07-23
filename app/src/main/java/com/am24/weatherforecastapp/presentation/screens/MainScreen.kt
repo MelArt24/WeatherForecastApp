@@ -1,6 +1,7 @@
 package com.am24.weatherforecastapp.presentation.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,6 +31,7 @@ import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherIconHelper
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
+import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.theme.Black
 import com.am24.weatherforecastapp.presentation.theme.BlueBg
 import kotlinx.coroutines.launch
@@ -39,6 +41,13 @@ import org.json.JSONArray
 fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val openCitySearch = {
+        DialogManager.citySearchDialog(context, object : DialogManager.Listener {
+            override fun onClick(name: String?) {
+                name?.let { viewModel.requestCityWeather(city = it) }
+            }
+        })
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -66,31 +75,109 @@ fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
                 )
             )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp)
+        val persistentError = uiState.error?.takeIf { !uiState.hasWeather }
+        if (persistentError != null) {
+            InitialErrorContent(
+                error = persistentError,
+                onRetry = if (persistentError is WeatherUiError.CitySearch) {
+                    { viewModel.retryLastRequest() }
+                } else {
+                    null
+                },
+                onSearchClick = openCitySearch,
+                onLocationClick = onLocationRequest,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(10.dp)
+            ) {
+                MainCard(
+                    weather = uiState.displayedWeather,
+                    onSyncClick = onLocationRequest,
+                    onSearchClick = openCitySearch
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                WeatherTabs(
+                    displayedWeather = uiState.displayedWeather,
+                    dailyWeather = uiState.dailyWeather,
+                    isLoading = uiState.isLoading && !uiState.hasWeather,
+                    onDayClick = { viewModel.setSelectedDay(it) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InitialErrorContent(
+    error: WeatherUiError,
+    onRetry: (() -> Unit)?,
+    onSearchClick: () -> Unit,
+    onLocationClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = BlueBg.copy(alpha = 0.9f),
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            MainCard(
-                weather = uiState.displayedWeather,
-                onSyncClick = onLocationRequest,
-                onSearchClick = {
-                    DialogManager.citySearchDialog(context, object : DialogManager.Listener {
-                        override fun onClick(name: String?) {
-                            name?.let { viewModel.requestCityWeather(city = it) }
-                        }
-                    })
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(error.messageResource()),
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = onLocationClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_sync),
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.use_current_location))
                 }
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            WeatherTabs(
-                displayedWeather = uiState.displayedWeather,
-                dailyWeather = uiState.dailyWeather,
-                isLoading = uiState.isLoading && !uiState.hasWeather,
-                onDayClick = viewModel::setSelectedDay
-            )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onSearchClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                    border = BorderStroke(1.dp, Color.White)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_search),
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.search_city))
+                }
+                onRetry?.let { retry ->
+                    Spacer(modifier = Modifier.height(4.dp))
+                    TextButton(onClick = retry) {
+                        Text(
+                            text = stringResource(R.string.retry),
+                            color = Color.White
+                        )
+                    }
+                }
+            }
         }
     }
 }

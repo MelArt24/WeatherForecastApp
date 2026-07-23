@@ -37,17 +37,30 @@ enum class WeatherUiStatus {
 }
 
 sealed interface WeatherUiError {
-    fun messageResource(): Int = when {
-        cause == DomainError.Network(NetworkErrorReason.Offline) -> R.string.offline_error
-        this is WeatherUiError.CitySearch &&
-                (cause as? DomainError.Api)?.reason == ApiErrorReason.NotFound ->
-            R.string.city_not_found
-        this is WeatherUiError.Location &&
-                cause == DomainError.Location(LocationErrorReason.PermissionDenied) ->
-            R.string.location_permission_denied
-        this is WeatherUiError.Location -> R.string.location_error
-        this is WeatherUiError.Weather -> R.string.weather_error
-        else -> R.string.location_error
+    fun messageResource(): Int = when (val error = cause) {
+        is DomainError.Network -> when (error.reason) {
+            NetworkErrorReason.Offline -> R.string.offline_error
+            NetworkErrorReason.Timeout -> R.string.timeout_error
+            NetworkErrorReason.ConnectionFailed -> R.string.connection_error
+        }
+        is DomainError.Api -> when (error.reason) {
+            ApiErrorReason.Unauthorized -> R.string.api_access_error
+            ApiErrorReason.NotFound -> if (this is WeatherUiError.CitySearch) {
+                R.string.city_not_found
+            } else {
+                R.string.weather_not_found
+            }
+            ApiErrorReason.RateLimited -> R.string.rate_limit_error
+            ApiErrorReason.InvalidResponse -> R.string.invalid_response_error
+            ApiErrorReason.ServerError -> R.string.server_error
+            ApiErrorReason.RequestFailed -> R.string.weather_error
+        }
+        is DomainError.Location -> when (error.reason) {
+            LocationErrorReason.PermissionDenied -> R.string.location_permission_denied
+            LocationErrorReason.Unavailable -> R.string.location_unavailable_error
+            LocationErrorReason.ResolutionFailed -> R.string.location_resolution_error
+        }
+        DomainError.Unknown -> R.string.unknown_error
     }
 
     val cause: DomainError

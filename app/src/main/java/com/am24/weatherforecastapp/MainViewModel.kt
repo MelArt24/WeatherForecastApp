@@ -43,12 +43,14 @@ class MainViewModel(
 
     private var weatherRequestJob: Job? = null
     private var requestId = 0L
+    private var lastRequest: Request? = null
 
     fun setSelectedDay(item: WeatherModel) {
         _uiState.update { it.copy(selectedDay = item) }
     }
 
     fun requestCityWeather(city: String) {
+        lastRequest = Request.City(city)
         val id = beginRequest(Operation.CitySearch)
         weatherRequestJob = viewModelScope.launch {
             try {
@@ -69,6 +71,7 @@ class MainViewModel(
     }
 
     fun requestCurrentLocationWeather() {
+        lastRequest = Request.CurrentLocation
         val id = beginRequest(Operation.Location)
         weatherRequestJob = viewModelScope.launch {
             val location = try {
@@ -104,6 +107,14 @@ class MainViewModel(
             } finally {
                 finishRequest(id)
             }
+        }
+    }
+
+    fun retryLastRequest() {
+        when (val request = lastRequest) {
+            is Request.City -> requestCityWeather(request.city)
+            Request.CurrentLocation -> requestCurrentLocationWeather()
+            null -> Unit
         }
     }
 
@@ -154,6 +165,7 @@ class MainViewModel(
 
     private suspend fun showError(id: Long, error: WeatherUiError) {
         if (id != requestId) return
+        val hasWeather = _uiState.value.hasWeather
         _uiState.update { state ->
             if (state.hasWeather) {
                 state.copy(error = null, isRefreshing = false)
@@ -165,7 +177,9 @@ class MainViewModel(
                 )
             }
         }
-        _events.send(WeatherUiEvent.ShowError(error))
+        if (hasWeather) {
+            _events.send(WeatherUiEvent.ShowError(error))
+        }
     }
 
     private fun clearCancelledRequest(id: Long) {
@@ -201,6 +215,11 @@ class MainViewModel(
     private enum class Operation {
         CitySearch,
         Location
+    }
+
+    private sealed interface Request {
+        data class City(val city: String) : Request
+        data object CurrentLocation : Request
     }
 
 }

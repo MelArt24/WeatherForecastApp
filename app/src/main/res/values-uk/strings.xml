@@ -1,6 +1,19 @@
 <resources>
     <string name="weather_error">Не вдалося завантажити погоду</string>
     <string name="offline_error">Немає інтернету та збережених даних про погоду</string>
+    <string name="timeout_error">Час очікування минув. Спробуйте ще раз</string>
+    <string name="connection_error">Не вдалося підключитися. Перевірте з’єднання та спробуйте ще раз</string>
+    <string name="api_access_error">Немає доступу до сервісу погоди. Спробуйте пізніше</string>
+    <string name="weather_not_found">Дані про погоду не знайдено</string>
+    <string name="rate_limit_error">Забагато запитів. Зачекайте та спробуйте ще раз</string>
+    <string name="invalid_response_error">Сервіс погоди повернув некоректні дані</string>
+    <string name="server_error">Сервіс погоди недоступний. Спробуйте пізніше</string>
+    <string name="location_unavailable_error">Ваше місцеположення зараз недоступне</string>
+    <string name="location_resolution_error">Не вдалося визначити назву місця</string>
+    <string name="unknown_error">Щось пішло не так. Спробуйте ще раз</string>
+    <string name="retry">Повторити</string>
+    <string name="search_city">Знайти місто</string>
+    <string name="use_current_location">Використати поточне місцеположення</string>
     <string name="app_name">Прогноз погоди</string>
     <string name="current_weather_icon">Значок поточної погоди</string>
     <string name="wednesday_09_04_2025">Середа 09/04/2025</string>

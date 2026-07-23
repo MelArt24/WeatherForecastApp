@@ -187,22 +187,24 @@ class MainViewModelTest {
     }
 
     @Test
-    fun citySearchWithoutGeocodingResult_emitsCityNotFoundOnce() = runTest(testDispatcher) {
+    fun citySearchWithoutContent_storesCityNotFoundWithoutTransientDuplicate() = runTest(testDispatcher) {
         val viewModel = viewModel(
             repository = FakeWeatherRepository(),
             geocodingRepository = FakeGeocodingRepository(found = false)
         )
-        val event = async { viewModel.events.first() }
-
         viewModel.requestCityWeather("Unknown place")
         advanceUntilIdle()
+
+        val event = async { viewModel.events.first() }
+        runCurrent()
 
         val expectedError = WeatherUiError.CitySearch(
             DomainError.Api(ApiErrorReason.NotFound)
         )
         assertEquals(expectedError, viewModel.uiState.value.error)
         assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
-        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
+        assertFalse(event.isCompleted)
+        event.cancel()
     }
 
     @Test
@@ -217,18 +219,21 @@ class MainViewModelTest {
     }
 
     @Test
-    fun failedRequest_setsErrorStopsLoadingAndEmitsOneEvent() = runTest(testDispatcher) {
+    fun failedInitialRequest_setsErrorStopsLoadingWithoutTransientDuplicate() = runTest(testDispatcher) {
         val viewModel = viewModel(FakeWeatherRepository(response = { throw IllegalStateException() }))
-        val event = async { viewModel.events.first() }
 
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
+
+        val event = async { viewModel.events.first() }
+        runCurrent()
 
         assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
         val expectedError = WeatherUiError.Weather(DomainError.Unknown)
         assertEquals(expectedError, viewModel.uiState.value.error)
         assertFalse(viewModel.uiState.value.isLoading)
-        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
+        assertFalse(event.isCompleted)
+        event.cancel()
     }
 
     @Test
@@ -406,10 +411,11 @@ class MainViewModelTest {
             override suspend fun saveLastLocation(location: UserLocation) = Unit
         }
         val viewModel = viewModel(FakeWeatherRepository(), locationRepository)
-        val event = async { viewModel.events.first() }
-
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
+
+        val event = async { viewModel.events.first() }
+        runCurrent()
 
         with(viewModel.uiState.value) {
             assertEquals(WeatherUiStatus.Initial, status)
@@ -423,7 +429,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun offlineRequestWithoutCache_showsOfflineError() = runTest(testDispatcher) {
+    fun offlineRequestWithoutCache_storesOfflineErrorWithoutTransientDuplicate() = runTest(testDispatcher) {
         val viewModel = viewModel(
             FakeWeatherRepository(response = {
                 throw DomainFailureException(DomainError.Network(NetworkErrorReason.Offline))
@@ -438,11 +444,12 @@ class MainViewModelTest {
             DomainError.Network(NetworkErrorReason.Offline)
         )
         assertEquals(expectedError, viewModel.uiState.value.error)
-        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
+        assertFalse(event.isCompleted)
+        event.cancel()
     }
 
     @Test
-    fun missingLocationPermission_setsPermissionError() = runTest(testDispatcher) {
+    fun missingLocationPermission_setsPersistentPermissionErrorOnly() = runTest(testDispatcher) {
         val locationRepository = object : LocationRepository {
             override suspend fun getCurrentLocation(): UserLocation {
                 throw DomainFailureException(
@@ -453,20 +460,20 @@ class MainViewModelTest {
             override suspend fun saveLastLocation(location: UserLocation) = Unit
         }
         val viewModel = viewModel(FakeWeatherRepository(), locationRepository)
-        val event = async { viewModel.events.first() }
 
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
+
+        val event = async { viewModel.events.first() }
+        runCurrent()
 
         assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
         val expectedError = WeatherUiError.Location(
             DomainError.Location(LocationErrorReason.PermissionDenied)
         )
         assertEquals(expectedError, viewModel.uiState.value.error)
-        assertEquals(
-            WeatherUiEvent.ShowError(expectedError),
-            event.await()
-        )
+        assertFalse(event.isCompleted)
+        event.cancel()
     }
 
     @Test
@@ -495,19 +502,30 @@ class MainViewModelTest {
             currentFailure = IllegalStateException("Unavailable")
         )
         val viewModel = viewModel(FakeWeatherRepository(), locationRepository)
-        val event = async { viewModel.events.first() }
 
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
 
+        val event = async { viewModel.events.first() }
+        runCurrent()
+
         val expectedError = WeatherUiError.Location(DomainError.Unknown)
         assertEquals(expectedError, viewModel.uiState.value.error)
-        assertEquals(WeatherUiEvent.ShowError(expectedError), event.await())
+        assertFalse(event.isCompleted)
+        event.cancel()
     }
 
     @Test
     fun errorEvent_isConsumedOnlyOncePerFailure() = runTest(testDispatcher) {
-        val viewModel = viewModel(FakeWeatherRepository(response = { throw IllegalStateException() }))
+        var requestCount = 0
+        val viewModel = viewModel(
+            FakeWeatherRepository(response = {
+                if (requestCount++ == 0) successForecast() else throw IllegalStateException()
+            })
+        )
+
+        viewModel.requestCurrentLocationWeather()
+        advanceUntilIdle()
 
         viewModel.requestCurrentLocationWeather()
         advanceUntilIdle()
@@ -520,6 +538,31 @@ class MainViewModelTest {
         runCurrent()
         assertFalse(secondCollector.isCompleted)
         secondCollector.cancel()
+    }
+
+    @Test
+    fun retryLastRequest_repeatsFailedCitySearch() = runTest(testDispatcher) {
+        var requestCount = 0
+        val repository = FakeWeatherRepository(response = {
+            requestCount++
+            if (requestCount == 1) {
+                throw DomainFailureException(DomainError.Api(ApiErrorReason.ServerError))
+            }
+            successForecast()
+        })
+        val viewModel = viewModel(repository)
+
+        viewModel.requestCityWeather("Kyiv")
+        advanceUntilIdle()
+        assertEquals(WeatherUiStatus.Error, viewModel.uiState.value.status)
+
+        viewModel.retryLastRequest()
+        advanceUntilIdle()
+
+        assertEquals(2, requestCount)
+        assertEquals("Kyiv", repository.lastCity)
+        assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+        assertNull(viewModel.uiState.value.error)
     }
 
     @Test
