@@ -8,11 +8,16 @@ import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 class SearchCityWeatherUseCase(
     private val weatherRepository: WeatherRepository,
     private val geocodingRepository: GeocodingRepository,
-    private val networkMonitor: NetworkMonitor = NetworkMonitor { true }
+    private val networkMonitor: NetworkMonitor = object : NetworkMonitor {
+        override fun isOnline(): Boolean = true
+        override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
+    }
 ) {
     suspend operator fun invoke(city: String): CityWeatherResult {
         val normalizedQuery = city.trim().replace(Regex("\\s+"), " ")

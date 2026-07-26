@@ -1,4 +1,5 @@
 <resources>
+    <string name="no_internet_connection">Немає підключення до інтернету</string>
     <string name="weather_error">Не вдалося завантажити погоду</string>
     <string name="offline_error">Немає інтернету та збережених даних про погоду</string>
     <string name="timeout_error">Час очікування минув. Спробуйте ще раз</string>

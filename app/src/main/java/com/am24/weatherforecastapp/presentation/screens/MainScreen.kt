@@ -1,6 +1,11 @@
 package com.am24.weatherforecastapp.presentation.screens
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +40,7 @@ import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherIconHelper
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
 import com.am24.weatherforecastapp.presentation.WeatherUiError
+import com.am24.weatherforecastapp.presentation.WeatherUiState
 import com.am24.weatherforecastapp.presentation.theme.Black
 import com.am24.weatherforecastapp.presentation.theme.BlueBg
 import kotlinx.coroutines.launch
@@ -39,6 +48,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val openCitySearch = {
         DialogManager.citySearchDialog(context, object : DialogManager.Listener {
@@ -62,6 +72,25 @@ fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
         }
     }
 
+    MainScreenContent(
+        uiState = uiState,
+        isOnline = isOnline,
+        onRetry = viewModel::retryLastRequest,
+        onSearchClick = openCitySearch,
+        onLocationClick = onLocationRequest,
+        onDayClick = viewModel::setSelectedDay
+    )
+}
+
+@Composable
+fun MainScreenContent(
+    uiState: WeatherUiState,
+    isOnline: Boolean,
+    onRetry: () -> Unit,
+    onSearchClick: () -> Unit,
+    onLocationClick: () -> Unit,
+    onDayClick: (WeatherModel) -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -74,43 +103,73 @@ fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
                 )
             )
     ) {
-        val persistentError = uiState.error?.takeIf { !uiState.hasWeather }
-        if (persistentError != null) {
-            InitialErrorContent(
-                error = persistentError,
-                onRetry = if (persistentError is WeatherUiError.CitySearch) {
-                    { viewModel.retryLastRequest() }
-                } else {
-                    null
-                },
-                onSearchClick = openCitySearch,
-                onLocationClick = onLocationRequest,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-            )
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(10.dp)
+        Column(modifier = Modifier.fillMaxSize()) {
+            AnimatedVisibility(
+                visible = !isOnline,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
             ) {
-                MainCard(
-                    weather = uiState.displayedWeather,
-                    onSyncClick = onLocationRequest,
-                    onSearchClick = openCitySearch
-                )
+                InternetConnectivityBanner()
+            }
 
-                Spacer(modifier = Modifier.height(10.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                val persistentError = uiState.error?.takeIf { !uiState.hasWeather }
+                if (persistentError != null) {
+                    InitialErrorContent(
+                        error = persistentError,
+                        onRetry = if (persistentError is WeatherUiError.CitySearch) onRetry else null,
+                        onSearchClick = onSearchClick,
+                        onLocationClick = onLocationClick,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp)
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(10.dp)
+                    ) {
+                        MainCard(
+                            weather = uiState.displayedWeather,
+                            onSyncClick = onLocationClick,
+                            onSearchClick = onSearchClick
+                        )
 
-                WeatherTabs(
-                    displayedWeather = uiState.displayedWeather,
-                    dailyWeather = uiState.dailyWeather,
-                    isLoading = uiState.isLoading && !uiState.hasWeather,
-                    onDayClick = { viewModel.setSelectedDay(it) }
-                )
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        WeatherTabs(
+                            displayedWeather = uiState.displayedWeather,
+                            dailyWeather = uiState.dailyWeather,
+                            isLoading = uiState.isLoading && !uiState.hasWeather,
+                            onDayClick = onDayClick
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun InternetConnectivityBanner() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp)
+            .padding(top = 6.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite },
+        shape = RoundedCornerShape(8.dp),
+        color = Color(0xFFEA1200),
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        tonalElevation = 2.dp
+    ) {
+        Text(
+            text = stringResource(R.string.no_internet_connection),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

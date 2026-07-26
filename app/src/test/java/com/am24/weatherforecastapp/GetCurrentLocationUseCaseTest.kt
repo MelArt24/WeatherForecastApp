@@ -1,6 +1,5 @@
 package com.am24.weatherforecastapp
 
-import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
@@ -32,7 +31,7 @@ class GetCurrentLocationUseCaseTest {
     fun offline_usesSavedLocationWithoutRequestingCurrentLocation() = runTest {
         val repository = FakeLocationRepository(current = current, lastSaved = saved)
 
-        val result = GetCurrentLocationUseCase(repository, NetworkMonitor { false })()
+        val result = GetCurrentLocationUseCase(repository, FakeNetworkMonitor(false))()
 
         assertEquals(saved, result)
         assertEquals(0, repository.currentReadCount)
@@ -43,7 +42,7 @@ class GetCurrentLocationUseCaseTest {
         val repository = FakeLocationRepository(current = current)
 
         val failure = captureFailure {
-            GetCurrentLocationUseCase(repository, NetworkMonitor { false })()
+            GetCurrentLocationUseCase(repository, FakeNetworkMonitor(false))()
         }
 
         assertEquals(

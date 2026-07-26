@@ -70,6 +70,61 @@ class MainViewModelTest {
     }
 
     @Test
+    fun initialConnectivity_matchesOnlineSnapshot() {
+        val viewModel = viewModel(FakeWeatherRepository(), networkMonitor = FakeNetworkMonitor(true))
+
+        assertTrue(viewModel.isOnline.value)
+    }
+
+    @Test
+    fun initialConnectivity_matchesOfflineSnapshot() {
+        val viewModel = viewModel(FakeWeatherRepository(), networkMonitor = FakeNetworkMonitor(false))
+
+        assertFalse(viewModel.isOnline.value)
+    }
+
+    @Test
+    fun connectivityChanges_doNotChangeWeatherState() = runTest(testDispatcher) {
+        val networkMonitor = FakeNetworkMonitor(true)
+        val viewModel = viewModel(FakeWeatherRepository(), networkMonitor = networkMonitor)
+        val weatherState = viewModel.uiState.value
+
+        networkMonitor.setOnline(false)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isOnline.value)
+        assertEquals(weatherState, viewModel.uiState.value)
+
+        networkMonitor.setOnline(true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isOnline.value)
+        assertEquals(weatherState, viewModel.uiState.value)
+    }
+
+    @Test
+    fun connectivitySurvivesWeatherLoadingTransitions() = runTest(testDispatcher) {
+        val response = CompletableDeferred<WeatherForecast>()
+        val networkMonitor = FakeNetworkMonitor(false)
+        val viewModel = viewModel(
+            repository = FakeWeatherRepository { response.await() },
+            networkMonitor = networkMonitor
+        )
+
+        viewModel.requestCityWeather("Kyiv")
+        runCurrent()
+
+        assertFalse(viewModel.isOnline.value)
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        response.complete(successForecast())
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isOnline.value)
+        assertEquals(WeatherUiStatus.Success, viewModel.uiState.value.status)
+    }
+
+    @Test
     fun currentLocationRequest_isLoadingThenSucceeds() = runTest(testDispatcher) {
         val response = CompletableDeferred<WeatherForecast>()
         val repository = FakeWeatherRepository(response = { response.await() })
@@ -655,7 +710,8 @@ class MainViewModelTest {
     private fun viewModel(
         repository: WeatherRepository,
         locationRepository: LocationRepository = FakeLocationRepository(),
-        geocodingRepository: GeocodingRepository = FakeGeocodingRepository()
+        geocodingRepository: GeocodingRepository = FakeGeocodingRepository(),
+        networkMonitor: FakeNetworkMonitor = FakeNetworkMonitor()
     ) = MainViewModel(
         GetCurrentWeatherUseCase(repository),
         GetCurrentLocationUseCase(locationRepository),
@@ -663,7 +719,8 @@ class MainViewModelTest {
         WeatherPresentationMapper(
             conditionLocalizer = { _, fallback -> fallback },
             clock = Clock.fixed(Instant.parse("2026-07-05T12:34:00Z"), ZoneOffset.UTC)
-        )
+        ),
+        networkMonitor
     )
 
     private class FakeLocationRepository(

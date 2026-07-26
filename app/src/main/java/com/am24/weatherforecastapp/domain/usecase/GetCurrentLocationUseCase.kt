@@ -8,10 +8,15 @@ import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import com.am24.weatherforecastapp.domain.model.UserLocation
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 class GetCurrentLocationUseCase(
     private val locationRepository: LocationRepository,
-    private val networkMonitor: NetworkMonitor = NetworkMonitor { true }
+    private val networkMonitor: NetworkMonitor = object : NetworkMonitor {
+        override fun isOnline(): Boolean = true
+        override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
+    }
 ) {
     suspend operator fun invoke(): UserLocation {
         if (!networkMonitor.isOnlineOrDomainFailure()) {

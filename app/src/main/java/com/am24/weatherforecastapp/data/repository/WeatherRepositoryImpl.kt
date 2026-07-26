@@ -20,13 +20,18 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 class WeatherRepositoryImpl(
     private val apiService: WeatherApiService,
     private val localDataSource: WeatherLocalDataSource,
     private val timeProvider: TimeProvider,
     private val cachePolicy: WeatherCachePolicy,
-    private val networkMonitor: NetworkMonitor = NetworkMonitor { true },
+    private val networkMonitor: NetworkMonitor = object : NetworkMonitor {
+        override fun isOnline(): Boolean = true
+        override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
+    },
     private val apiKey: String,
     private val timezone: String = ZoneId.systemDefault().id
 ) : WeatherRepository {

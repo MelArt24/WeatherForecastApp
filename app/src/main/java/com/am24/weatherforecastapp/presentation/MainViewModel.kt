@@ -7,6 +7,7 @@ import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import kotlinx.coroutines.CancellationException
@@ -24,11 +25,15 @@ class MainViewModel(
     private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
     private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
     private val searchCityWeatherUseCase: SearchCityWeatherUseCase,
-    private val weatherPresentationMapper: WeatherPresentationMapper
+    private val weatherPresentationMapper: WeatherPresentationMapper,
+    networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeatherUiState())
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
+
+    private val _isOnline = MutableStateFlow(networkMonitor.isOnline())
+    val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
 
     private val _events = Channel<WeatherUiEvent>(Channel.BUFFERED)
     val events: Flow<WeatherUiEvent> = _events.receiveAsFlow()
@@ -36,6 +41,12 @@ class MainViewModel(
     private var weatherRequestJob: Job? = null
     private var requestId = 0L
     private var lastRequest: Request? = null
+
+    init {
+        viewModelScope.launch {
+            networkMonitor.observeConnectivity().collect(_isOnline)
+        }
+    }
 
     fun setSelectedDay(item: WeatherModel) {
         _uiState.update { it.copy(selectedDay = item) }

@@ -4,7 +4,6 @@ import com.am24.weatherforecastapp.data.cache.TimeProvider
 import com.am24.weatherforecastapp.data.cache.WeatherCachePolicy
 import com.am24.weatherforecastapp.data.local.CachedWeather
 import com.am24.weatherforecastapp.data.local.WeatherLocalDataSource
-import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.data.remote.CurrentWeatherDto
 import com.am24.weatherforecastapp.data.remote.DailyForecastDto
 import com.am24.weatherforecastapp.data.remote.HourlyForecastDto
@@ -229,7 +228,7 @@ class WeatherRepositoryImplTest {
         localDataSource = local,
         timeProvider = TimeProvider { now },
         cachePolicy = WeatherCachePolicy(ttl),
-        networkMonitor = NetworkMonitor { online },
+        networkMonitor = FakeNetworkMonitor(online),
         apiKey = "key",
         timezone = "UTC"
     )

@@ -113,8 +113,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     androidTestImplementation (libs.core.ktx)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation("org.mockito:mockito-android:5.19.0")
 }
 
 ksp {

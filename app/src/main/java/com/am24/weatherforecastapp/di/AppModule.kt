@@ -35,7 +35,7 @@ private val Context.locationDataStore: DataStore<Preferences> by preferencesData
 )
 
 val appModule = module {
-    single<NetworkMonitor> { AndroidNetworkMonitor(get()) }
+    single<NetworkMonitor> { AndroidNetworkMonitor(get<Context>()) }
     single<DataStore<Preferences>> { get<Context>().locationDataStore }
     single<SavedLocationLocalDataSource> { DataStoreSavedLocationLocalDataSource(get()) }
     single<GeocodingRepository> { GeocodingRepositoryImpl(get()) }
@@ -76,7 +76,8 @@ val appModule = module {
             getCurrentWeatherUseCase = get(),
             getCurrentLocationUseCase = get(),
             searchCityWeatherUseCase = get(),
-            weatherPresentationMapper = get()
+            weatherPresentationMapper = get(),
+            networkMonitor = get()
         )
     }
 }
