@@ -23,16 +23,12 @@ class GeocodingRepositoryImpl(
 
     override suspend fun searchLocation(query: String): GeocodedLocation? {
         if (!Geocoder.isPresent()) throw providerUnavailable()
-        val address = try {
+        val address = executeGeocoderCall {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 searchAsync(query)
             } else {
                 searchLegacy(query)
             }
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (failure: Exception) {
-            throw DomainFailureException(failure.toLocationDomainError())
         }
 
         return address?.let {
@@ -46,18 +42,22 @@ class GeocodingRepositoryImpl(
 
     override suspend fun resolvePlaceName(latitude: Double, longitude: Double): String? {
         if (!Geocoder.isPresent()) throw providerUnavailable()
-        val address = try {
+        val address = executeGeocoderCall {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 reverseAsync(latitude, longitude)
             } else {
                 reverseLegacy(latitude, longitude)
             }
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (failure: Exception) {
-            throw DomainFailureException(failure.toLocationDomainError())
         }
         return address?.resolvePlaceName()
+    }
+
+    private suspend fun executeGeocoderCall(block: suspend () -> Address?): Address? = try {
+        block()
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (failure: Exception) {
+        throw DomainFailureException(failure.toLocationDomainError())
     }
 
     private fun geocoder(): Geocoder = Geocoder(

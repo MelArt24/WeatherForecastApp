@@ -1,6 +1,5 @@
 package com.am24.weatherforecastapp.data.local
 
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.doublePreferencesKey

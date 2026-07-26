@@ -25,8 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.am24.weatherforecastapp.DialogManager
-import com.am24.weatherforecastapp.MainViewModel
+import com.am24.weatherforecastapp.presentation.DialogManager
+import com.am24.weatherforecastapp.presentation.MainViewModel
 import com.am24.weatherforecastapp.R
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.WeatherIconHelper
@@ -35,7 +35,6 @@ import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.theme.Black
 import com.am24.weatherforecastapp.presentation.theme.BlueBg
 import kotlinx.coroutines.launch
-import org.json.JSONArray
 
 @Composable
 fun MainScreen(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
@@ -315,32 +314,7 @@ fun WeatherTabs(
 
 @Composable
 fun HoursList(weather: WeatherModel?, isLoading: Boolean) {
-    val hours = remember(weather) {
-        if (weather == null || weather.hours.isEmpty()) emptyList<WeatherModel>()
-        else {
-            try {
-                val array = JSONArray(weather.hours)
-                val list = mutableListOf<WeatherModel>()
-                for (i in 0 until array.length()) {
-                    val obj = array.getJSONObject(i)
-                    list.add(
-                        WeatherModel(
-                            weather.city,
-                            obj.getString("date").split("T").last().substring(0, 5),
-                            obj.getString("summary"),
-                            obj.getDouble("temperature").toInt().toString() + "°C",
-                            "", "",
-                            obj.getString("icon"),
-                            ""
-                        )
-                    )
-                }
-                list
-            } catch (_: Exception) {
-                emptyList()
-            }
-        }
-    }
+    val hours = weather?.hourlyWeather.orEmpty()
 
     if (hours.isEmpty() && !isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

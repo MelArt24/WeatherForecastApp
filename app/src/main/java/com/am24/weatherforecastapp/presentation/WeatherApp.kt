@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.am24.weatherforecastapp.MainViewModel
+import com.am24.weatherforecastapp.presentation.MainViewModel
 import com.am24.weatherforecastapp.presentation.screens.MainScreen
 
 @Composable

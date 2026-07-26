@@ -111,9 +111,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-    testImplementation("org.json:json:20240303")
     androidTestImplementation (libs.core.ktx)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation(libs.androidx.room.testing)
 }
 

@@ -1,19 +1,11 @@
-package com.am24.weatherforecastapp
+package com.am24.weatherforecastapp.presentation
 
 import android.content.Context
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
+import com.am24.weatherforecastapp.R
 
-/**
- * Менеджер діалогових вікон.
- * Використовує патерн Singleton (через ключове слово object),
- * щоб зручно викликати діалоги з будь-якої частини програми.
- */
 object DialogManager {
-
-    /**
-     * Діалог, який пропонує користувачеві увімкнути GPS.
-     */
     fun locationSettingsDialog(context: Context, listener: Listener) {
         val builder = AlertDialog.Builder(context)
         val dialog = builder.create()
@@ -32,9 +24,6 @@ object DialogManager {
         dialog.show()
     }
 
-    /**
-     * Діалог для введення назви міста вручну.
-     */
     fun citySearchDialog(context: Context, listener: Listener) {
         val builder = AlertDialog.Builder(context)
         val editText = EditText(context)
@@ -53,10 +42,6 @@ object DialogManager {
         dialog.show()
     }
 
-    /**
-     * Інтерфейс-слухач. Він потрібен, щоб той, хто викликав діалог (наприклад, MainFragment),
-     * дізнався, що користувач натиснув кнопку "OK" і яке місто він ввів.
-     */
     interface Listener {
         fun onClick(name: String?)
     }

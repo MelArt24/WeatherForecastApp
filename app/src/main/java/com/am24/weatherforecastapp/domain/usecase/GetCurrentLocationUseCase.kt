@@ -1,7 +1,7 @@
 package com.am24.weatherforecastapp.domain.usecase
 
-import com.am24.weatherforecastapp.data.network.NetworkMonitor
-import com.am24.weatherforecastapp.data.network.isOnlineOrDomainFailure
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.error.NetworkErrorReason

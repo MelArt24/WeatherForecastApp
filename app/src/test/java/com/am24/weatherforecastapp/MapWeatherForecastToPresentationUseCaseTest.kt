@@ -6,7 +6,6 @@ import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.WeatherCondition
 import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
-import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -58,15 +57,14 @@ class MapWeatherForecastToPresentationUseCaseTest {
     }
 
     @Test
-    fun invoke_preservesHourlyJsonShape() {
+    fun invoke_mapsHourlyWeather() {
         val result = useCase(forecast(), city = "Kyiv")
-        val hours = JSONArray(result.current?.hours)
-        val firstHour = hours.getJSONObject(0)
+        val firstHour = result.current?.hourlyWeather?.first()
 
-        assertEquals("2026-07-05T12:00:00", firstHour.getString("date"))
-        assertEquals("Clear", firstHour.getString("summary"))
-        assertEquals(21.4, firstHour.getDouble("temperature"), 0.0)
-        assertEquals(1, firstHour.getInt("icon"))
+        assertEquals("12:00", firstHour?.time)
+        assertEquals("Clear", firstHour?.condition)
+        assertEquals("21°C", firstHour?.currentTemperature)
+        assertEquals("1", firstHour?.imageURL)
     }
 
     @Test
@@ -80,11 +78,11 @@ class MapWeatherForecastToPresentationUseCaseTest {
         )
 
         val result = useCase(forecast, city = "Kyiv")
-        val hours = JSONArray(result.current?.hours)
+        val hours = result.current?.hourlyWeather.orEmpty()
 
         assertEquals("localized:Clear", result.current?.condition)
-        assertEquals("localized:Rain", hours.getJSONObject(0).getString("summary"))
-        assertEquals("Provider fallback", hours.getJSONObject(1).getString("summary"))
+        assertEquals("localized:Rain", hours[0].condition)
+        assertEquals("Provider fallback", hours[1].condition)
     }
 
     @Test

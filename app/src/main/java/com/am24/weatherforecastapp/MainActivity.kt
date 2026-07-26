@@ -15,6 +15,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import com.am24.weatherforecastapp.presentation.DialogManager
+import com.am24.weatherforecastapp.presentation.MainViewModel
 import com.am24.weatherforecastapp.presentation.WeatherApp
 import com.am24.weatherforecastapp.presentation.theme.WeatherForecastAppTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel

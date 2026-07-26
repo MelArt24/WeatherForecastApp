@@ -1,33 +1,25 @@
-package com.am24.weatherforecastapp
+package com.am24.weatherforecastapp.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
-import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
-import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
-import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
 import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
+import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
+import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
+import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
-import com.am24.weatherforecastapp.presentation.WeatherUiError
-import com.am24.weatherforecastapp.presentation.WeatherUiEvent
-import com.am24.weatherforecastapp.presentation.WeatherUiState
-import com.am24.weatherforecastapp.presentation.WeatherUiStatus
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.CancellationException
 
-/**
- * ViewModel — це "спільна пам'ять" для всіх фрагментів додатка.
- * Вона виживає при повороті екрана та зміні конфігурації.
- */
 class MainViewModel(
     private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
     private val getCurrentLocationUseCase: GetCurrentLocationUseCase,

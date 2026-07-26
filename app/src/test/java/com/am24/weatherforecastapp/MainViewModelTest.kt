@@ -18,6 +18,7 @@ import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
+import com.am24.weatherforecastapp.presentation.MainViewModel
 import com.am24.weatherforecastapp.presentation.WeatherUiError
 import com.am24.weatherforecastapp.presentation.WeatherUiEvent
 import com.am24.weatherforecastapp.presentation.WeatherUiState
@@ -733,7 +734,7 @@ class MainViewModelTest {
             minimumTemperature = "18",
             maximumTemperature = "24",
             imageURL = "1",
-            hours = "[]"
+            hourlyWeather = emptyList()
         )
     }
 }

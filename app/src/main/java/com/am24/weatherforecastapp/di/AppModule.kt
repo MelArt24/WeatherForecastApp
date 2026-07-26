@@ -6,14 +6,14 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.am24.weatherforecastapp.BuildConfig
-import com.am24.weatherforecastapp.MainViewModel
+import com.am24.weatherforecastapp.presentation.MainViewModel
 import com.am24.weatherforecastapp.data.remote.RetrofitClient
 import com.am24.weatherforecastapp.data.remote.WeatherApiService
 import com.am24.weatherforecastapp.data.cache.ClockTimeProvider
 import com.am24.weatherforecastapp.data.cache.TimeProvider
 import com.am24.weatherforecastapp.data.cache.WeatherCachePolicy
 import com.am24.weatherforecastapp.data.network.AndroidNetworkMonitor
-import com.am24.weatherforecastapp.data.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.data.local.RoomWeatherLocalDataSource
 import com.am24.weatherforecastapp.data.local.WeatherDatabase
 import com.am24.weatherforecastapp.data.local.WeatherLocalDataSource

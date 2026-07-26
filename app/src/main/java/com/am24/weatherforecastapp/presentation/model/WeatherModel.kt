@@ -1,9 +1,5 @@
 package com.am24.weatherforecastapp.presentation.model
 
-/**
- * Модель даних, яка описує стан погоди.
- * Використовується для передачі інформації від API (інтернету) до екрана користувача.
- */
 data class WeatherModel(
     val city: String,
     val time: String,
@@ -12,5 +8,5 @@ data class WeatherModel(
     val minimumTemperature: String,
     val maximumTemperature: String,
     val imageURL: String,
-    val hours: String
+    val hourlyWeather: List<WeatherModel>
 )

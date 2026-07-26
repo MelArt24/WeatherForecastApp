@@ -3,9 +3,9 @@ package com.am24.weatherforecastapp.domain.usecase
 import com.am24.weatherforecastapp.domain.error.ApiErrorReason
 import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
-import com.am24.weatherforecastapp.domain.CityWeatherResult
-import com.am24.weatherforecastapp.data.network.NetworkMonitor
-import com.am24.weatherforecastapp.data.network.isOnlineOrDomainFailure
+import com.am24.weatherforecastapp.domain.model.CityWeatherResult
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
 

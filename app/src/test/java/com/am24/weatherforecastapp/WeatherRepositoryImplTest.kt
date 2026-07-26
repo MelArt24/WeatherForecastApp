@@ -4,7 +4,7 @@ import com.am24.weatherforecastapp.data.cache.TimeProvider
 import com.am24.weatherforecastapp.data.cache.WeatherCachePolicy
 import com.am24.weatherforecastapp.data.local.CachedWeather
 import com.am24.weatherforecastapp.data.local.WeatherLocalDataSource
-import com.am24.weatherforecastapp.data.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.data.remote.CurrentWeatherDto
 import com.am24.weatherforecastapp.data.remote.DailyForecastDto
 import com.am24.weatherforecastapp.data.remote.HourlyForecastDto

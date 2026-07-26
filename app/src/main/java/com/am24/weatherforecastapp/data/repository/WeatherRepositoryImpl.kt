@@ -6,8 +6,8 @@ import com.am24.weatherforecastapp.data.cache.TimeProvider
 import com.am24.weatherforecastapp.data.cache.WeatherCacheKeyFactory
 import com.am24.weatherforecastapp.data.cache.WeatherCachePolicy
 import com.am24.weatherforecastapp.data.local.WeatherLocalDataSource
-import com.am24.weatherforecastapp.data.network.NetworkMonitor
-import com.am24.weatherforecastapp.data.network.isOnlineOrDomainFailure
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.data.remote.WeatherApiService
 import com.am24.weatherforecastapp.domain.error.DomainError

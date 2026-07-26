@@ -1,11 +1,8 @@
 package com.am24.weatherforecastapp.presentation.mapper
 
-import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.presentation.WeatherConditionLocalizer
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
-import org.json.JSONArray
-import org.json.JSONObject
 import java.time.Clock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -16,7 +13,18 @@ class WeatherPresentationMapper(
 ) {
     operator fun invoke(forecast: WeatherForecast, city: String?): WeatherPresentationResult {
         val cityName = city ?: forecast.cityName ?: "Your city"
-        val hourlyJson = createHourlyJson(forecast.hourly)
+        val hourlyWeather = forecast.hourly.map { hour ->
+            WeatherModel(
+                city = cityName,
+                time = hour.date.substringAfterLast('T').take(5),
+                condition = conditionLocalizer.localize(hour.condition, hour.summary),
+                currentTemperature = hour.temperature.toInt().toString() + "\u00B0C",
+                minimumTemperature = "",
+                maximumTemperature = "",
+                imageURL = hour.iconCode.toString(),
+                hourlyWeather = emptyList()
+            )
+        }
         val daily = forecast.daily.map { day ->
             WeatherModel(
                 city = cityName,
@@ -26,7 +34,7 @@ class WeatherPresentationMapper(
                 minimumTemperature = day.temperatureMin.toInt().toString(),
                 maximumTemperature = day.temperatureMax.toInt().toString(),
                 imageURL = day.iconCode.toString(),
-                hours = hourlyJson
+                hourlyWeather = hourlyWeather
             )
         }
         val current = daily.firstOrNull()?.let { firstDay ->
@@ -41,23 +49,10 @@ class WeatherPresentationMapper(
                 minimumTemperature = firstDay.minimumTemperature,
                 maximumTemperature = firstDay.maximumTemperature,
                 imageURL = forecast.current.iconCode.toString(),
-                hours = firstDay.hours
+                hourlyWeather = firstDay.hourlyWeather
             )
         }
         return WeatherPresentationResult(current = current, daily = daily)
-    }
-
-    private fun createHourlyJson(hourlyData: List<HourlyWeather>): String {
-        val array = JSONArray()
-        hourlyData.forEach { data ->
-            val obj = JSONObject()
-            obj.put("date", data.date)
-            obj.put("summary", conditionLocalizer.localize(data.condition, data.summary))
-            obj.put("temperature", data.temperature)
-            obj.put("icon", data.iconCode)
-            array.put(obj)
-        }
-        return array.toString()
     }
 
     private companion object {
