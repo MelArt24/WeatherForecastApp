@@ -25,7 +25,8 @@ import org.junit.Assert.assertSame
 import org.junit.Test
 
 class WeatherRepositoryImplTest {
-    private val now = 1_000_000L
+    private val dayMillis = 24 * 60 * 60 * 1_000L
+    private val now = 10 * dayMillis
     private val remoteForecast = forecast("remote", 20.0)
     private val cachedForecast = forecast("cached", 10.0)
 
@@ -57,12 +58,44 @@ class WeatherRepositoryImplTest {
     @Test
     fun offlineWithStaleCache_returnsCacheWithoutRemoteRequest() = runTest {
         val api = FakeApi(dto("remote", 20.0))
-        val local = FakeLocalDataSource(CachedWeather(cachedForecast, 0))
+        val local = FakeLocalDataSource(CachedWeather(cachedForecast, now - dayMillis))
 
         val result = repository(api, local, online = false).getWeatherData("1", "2", null)
 
         assertEquals(cachedForecast, result)
         assertEquals(0, api.calls)
+    }
+
+    @Test
+    fun offlineWithSixDayOldCache_rejectsCacheWithoutRemoteRequest() = runTest {
+        val api = FakeApi(dto("remote", 20.0))
+        val local = FakeLocalDataSource(CachedWeather(cachedForecast, now - 6 * dayMillis))
+
+        val thrown = captureFailure {
+            repository(api, local, online = false).getWeatherData("1", "2", null)
+        }
+
+        assertEquals(0, api.calls)
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.Offline),
+            (thrown as DomainFailureException).error
+        )
+    }
+
+    @Test
+    fun offlineWithFutureCache_rejectsCacheWithoutRemoteRequest() = runTest {
+        val api = FakeApi(dto("remote", 20.0))
+        val local = FakeLocalDataSource(CachedWeather(cachedForecast, now + 1))
+
+        val thrown = captureFailure {
+            repository(api, local, online = false).getWeatherData("1", "2", null)
+        }
+
+        assertEquals(0, api.calls)
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.Offline),
+            (thrown as DomainFailureException).error
+        )
     }
 
     @Test
@@ -94,13 +127,43 @@ class WeatherRepositoryImplTest {
 
     @Test
     fun remoteFailure_returnsMatchingStaleCache() = runTest {
-        val local = FakeLocalDataSource(CachedWeather(cachedForecast, 0))
+        val local = FakeLocalDataSource(CachedWeather(cachedForecast, now - dayMillis))
 
         val result = repository(FakeApi(failure = IOException("offline")), local)
             .getWeatherData("1", "2", null)
 
         assertEquals(cachedForecast, result)
         assertEquals("lat:1.0000|lon:2.0000", local.readKey)
+    }
+
+    @Test
+    fun remoteFailureWithSixDayOldCache_mapsFailure() = runTest {
+        val local = FakeLocalDataSource(CachedWeather(cachedForecast, now - 6 * dayMillis))
+
+        val thrown = captureFailure {
+            repository(FakeApi(failure = IOException("offline")), local)
+                .getWeatherData("1", "2", null)
+        }
+
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.ConnectionFailed),
+            (thrown as DomainFailureException).error
+        )
+    }
+
+    @Test
+    fun remoteFailureWithFutureCache_mapsFailure() = runTest {
+        val local = FakeLocalDataSource(CachedWeather(cachedForecast, now + 1))
+
+        val thrown = captureFailure {
+            repository(FakeApi(failure = IOException("offline")), local)
+                .getWeatherData("1", "2", null)
+        }
+
+        assertEquals(
+            DomainError.Network(NetworkErrorReason.ConnectionFailed),
+            (thrown as DomainFailureException).error
+        )
     }
 
     @Test

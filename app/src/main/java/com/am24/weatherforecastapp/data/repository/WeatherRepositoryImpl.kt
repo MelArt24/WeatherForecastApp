@@ -43,14 +43,15 @@ class WeatherRepositoryImpl(
 
         return mutexFor(cacheKey).withLock {
             val cached = readCache(cacheKey)
+            val now = timeProvider.currentTimeMillis()
 
             if (!networkMonitor.isOnlineOrDomainFailure()) {
-                return@withLock cached?.forecast ?: throw DomainFailureException(
+                return@withLock cached
+                    ?.takeIf { cachePolicy.isUsableOffline(it.cachedAtMillis, now) }
+                    ?.forecast ?: throw DomainFailureException(
                     DomainError.Network(NetworkErrorReason.Offline)
                 )
             }
-
-            val now = timeProvider.currentTimeMillis()
 
             if (cached != null && cachePolicy.isFresh(cached.cachedAtMillis, now)) {
                 return@withLock cached.forecast
@@ -71,7 +72,9 @@ class WeatherRepositoryImpl(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (remoteFailure: Exception) {
-                cached?.forecast ?: throw DomainFailureException(remoteFailure.toWeatherDomainError())
+                cached
+                    ?.takeIf { cachePolicy.isUsableOffline(it.cachedAtMillis, now) }
+                    ?.forecast ?: throw DomainFailureException(remoteFailure.toWeatherDomainError())
             }
         }
     }
