@@ -1,3 +1,5 @@
+import io.gitlab.arturbosch.detekt.Detekt
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 import java.util.Properties
 
 plugins {
@@ -5,6 +7,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.ktlint)
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
 }
 
@@ -121,6 +125,42 @@ dependencies {
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+    basePath = rootProject.projectDir.absolutePath
+    source.setFrom(
+        "src/main/kotlin",
+        "src/main/java",
+        "src/test/kotlin",
+        "src/test/java",
+        "src/androidTest/kotlin",
+        "src/androidTest/java",
+    )
+}
+
+tasks.withType<Detekt>().configureEach {
+    exclude("**/build/**", "**/generated/**", "**/ksp/**")
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        sarif.required.set(true)
+        md.required.set(true)
+    }
+}
+
+ktlint {
+    android.set(true)
+    outputToConsole.set(true)
+    filter {
+        exclude("**/build/**", "**/generated/**", "**/ksp/**")
+    }
+    reporters {
+        reporter(ReporterType.PLAIN)
+        reporter(ReporterType.CHECKSTYLE)
+    }
 }
 
 kover {

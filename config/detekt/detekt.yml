@@ -1,0 +1,49 @@
+config:
+  validation: true
+  warningsAsErrors: true
+
+complexity:
+  LongParameterList:
+    ignoreAnnotated:
+      - Composable
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+  TooManyFunctions:
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+
+style:
+  MagicNumber:
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '8'
+      - '16'
+      - '24'
+      - '0.8'
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreNamedArgument: true
+    ignoreEnums: true
+    ignoreRanges: true
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+  MaxLineLength:
+    active: false
+  NewLineAtEndOfFile:
+    active: false
+  WildcardImport:
+    active: false

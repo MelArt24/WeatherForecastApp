@@ -18,6 +18,8 @@ navigationCompose = "2.8.5"
 room = "2.6.1"
 datastore = "1.1.1"
 ksp = "1.9.24-1.0.20"
+detekt = "1.23.8"
+ktlintPlugin = "14.2.0"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -57,3 +59,5 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }
