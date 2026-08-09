@@ -27,10 +27,11 @@ class WeatherCacheMapperTest {
     @Test
     fun cacheToDomain_restoresHourlyAndDailyPositionOrder() {
         val aggregate = forecast("Kyiv").toCachedAggregate("city:kyiv", 1L)
-        val shuffled = aggregate.copy(
-            hourly = aggregate.hourly.reversed(),
-            daily = aggregate.daily.reversed()
-        )
+        val shuffled =
+            aggregate.copy(
+                hourly = aggregate.hourly.reversed(),
+                daily = aggregate.daily.reversed(),
+            )
 
         val restored = shuffled.toCachedWeather().forecast
 
@@ -42,8 +43,10 @@ class WeatherCacheMapperTest {
     fun nullableCityNameAndEmptyCollections_arePreserved() {
         val forecast = forecast(cityName = null).copy(hourly = emptyList(), daily = emptyList())
 
-        val cached = forecast.toCachedAggregate("lat:1.0000|lon:2.0000", 99L)
-            .toCachedWeather()
+        val cached =
+            forecast
+                .toCachedAggregate("lat:1.0000|lon:2.0000", 99L)
+                .toCachedWeather()
 
         assertNull(cached.forecast.cityName)
         assertEquals(emptyList<HourlyWeather>(), cached.forecast.hourly)
@@ -61,33 +64,48 @@ class WeatherCacheMapperTest {
         assertEquals(2, aggregate.weather.currentIconCode)
         assertEquals(
             CachedHourlyWeatherEntity(
-                "city:lviv", 0, "hour-0", "Hourly clear", 20.25, 2
+                "city:lviv",
+                0,
+                "hour-0",
+                "Hourly clear",
+                20.25,
+                2,
             ),
-            aggregate.hourly.first()
+            aggregate.hourly.first(),
         )
         assertEquals(
             CachedDailyWeatherEntity(
-                "city:lviv", 0, "day-0", "Daily rain", 11, 10.5, 18.75
+                "city:lviv",
+                0,
+                "day-0",
+                "Daily rain",
+                11,
+                10.5,
+                18.75,
             ),
-            aggregate.daily.first()
+            aggregate.daily.first(),
         )
     }
 
-    private fun forecast(cityName: String?) = WeatherForecast(
-        cityName = cityName,
-        current = CurrentWeather(
-            summary = "Current summary",
-            temperature = 21.75,
-            iconCode = 2,
-            condition = WeatherCondition.Clear
-        ),
-        hourly = listOf(
-            HourlyWeather("hour-0", "Hourly clear", 20.25, 2, WeatherCondition.Clear),
-            HourlyWeather("hour-1", "Hourly rain", 17.5, 11, WeatherCondition.Rain)
-        ),
-        daily = listOf(
-            DailyWeather("day-0", "Daily rain", 11, 10.5, 18.75, WeatherCondition.Rain),
-            DailyWeather("day-1", "Daily snow", 16, -2.5, 1.25, WeatherCondition.Snow)
+    private fun forecast(cityName: String?) =
+        WeatherForecast(
+            cityName = cityName,
+            current =
+                CurrentWeather(
+                    summary = "Current summary",
+                    temperature = 21.75,
+                    iconCode = 2,
+                    condition = WeatherCondition.Clear,
+                ),
+            hourly =
+                listOf(
+                    HourlyWeather("hour-0", "Hourly clear", 20.25, 2, WeatherCondition.Clear),
+                    HourlyWeather("hour-1", "Hourly rain", 17.5, 11, WeatherCondition.Rain),
+                ),
+            daily =
+                listOf(
+                    DailyWeather("day-0", "Daily rain", 11, 10.5, 18.75, WeatherCondition.Rain),
+                    DailyWeather("day-1", "Daily snow", 16, -2.5, 1.25, WeatherCondition.Snow),
+                ),
         )
-    )
 }

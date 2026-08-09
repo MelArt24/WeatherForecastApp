@@ -6,11 +6,13 @@ import kotlinx.coroutines.flow.Flow
 
 interface NetworkMonitor {
     fun isOnline(): Boolean
+
     fun observeConnectivity(): Flow<Boolean>
 }
 
-fun NetworkMonitor.isOnlineOrDomainFailure(): Boolean = try {
-    isOnline()
-} catch (_: Exception) {
-    throw DomainFailureException(DomainError.Unknown)
-}
+fun NetworkMonitor.isOnlineOrDomainFailure(): Boolean =
+    try {
+        isOnline()
+    } catch (_: Exception) {
+        throw DomainFailureException(DomainError.Unknown)
+    }

@@ -12,16 +12,19 @@ import com.am24.weatherforecastapp.presentation.MainViewModel
 import com.am24.weatherforecastapp.presentation.screens.MainScreen
 
 @Composable
-fun WeatherApp(viewModel: MainViewModel, onLocationRequest: () -> Unit) {
+fun WeatherApp(
+    viewModel: MainViewModel,
+    onLocationRequest: () -> Unit,
+) {
     val navController = rememberNavController()
 
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = "main",
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
         ) {
             composable("main") {
                 MainScreen(viewModel, onLocationRequest)

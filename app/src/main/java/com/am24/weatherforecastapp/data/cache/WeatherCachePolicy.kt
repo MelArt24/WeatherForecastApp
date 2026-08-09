@@ -7,27 +7,34 @@ fun interface TimeProvider {
 }
 
 class ClockTimeProvider(
-    private val clock: Clock = Clock.systemUTC()
+    private val clock: Clock = Clock.systemUTC(),
 ) : TimeProvider {
     override fun currentTimeMillis(): Long = clock.millis()
 }
 
 class WeatherCachePolicy(
     val ttlMillis: Long = DEFAULT_TTL_MILLIS,
-    val maxOfflineAgeMillis: Long = DEFAULT_MAX_OFFLINE_AGE_MILLIS
+    val maxOfflineAgeMillis: Long = DEFAULT_MAX_OFFLINE_AGE_MILLIS,
 ) {
     init {
         require(ttlMillis >= 0) { "Cache TTL must not be negative" }
         require(maxOfflineAgeMillis >= 0) { "Maximum offline age must not be negative" }
     }
 
-    fun isFresh(cachedAtMillis: Long, nowMillis: Long): Boolean =
-        cacheAgeMillis(cachedAtMillis, nowMillis)?.let { it <= ttlMillis } == true
+    fun isFresh(
+        cachedAtMillis: Long,
+        nowMillis: Long,
+    ): Boolean = cacheAgeMillis(cachedAtMillis, nowMillis)?.let { it <= ttlMillis } == true
 
-    fun isUsableOffline(cachedAtMillis: Long, nowMillis: Long): Boolean =
-        cacheAgeMillis(cachedAtMillis, nowMillis)?.let { it <= maxOfflineAgeMillis } == true
+    fun isUsableOffline(
+        cachedAtMillis: Long,
+        nowMillis: Long,
+    ): Boolean = cacheAgeMillis(cachedAtMillis, nowMillis)?.let { it <= maxOfflineAgeMillis } == true
 
-    private fun cacheAgeMillis(cachedAtMillis: Long, nowMillis: Long): Long? {
+    private fun cacheAgeMillis(
+        cachedAtMillis: Long,
+        nowMillis: Long,
+    ): Long? {
         if (nowMillis < cachedAtMillis) return null
 
         return try {

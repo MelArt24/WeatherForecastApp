@@ -13,6 +13,6 @@ interface WeatherApiService {
         @Query("timezone") timezone: String,
         @Query("language") language: String = "en",
         @Query("units") units: String = "metric",
-        @Query("key") apiKey: String
+        @Query("key") apiKey: String,
     ): WeatherResponseDto
 }

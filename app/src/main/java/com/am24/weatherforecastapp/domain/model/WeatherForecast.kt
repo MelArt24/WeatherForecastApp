@@ -4,5 +4,5 @@ data class WeatherForecast(
     val cityName: String?,
     val current: CurrentWeather,
     val daily: List<DailyWeather>,
-    val hourly: List<HourlyWeather>
+    val hourly: List<HourlyWeather>,
 )

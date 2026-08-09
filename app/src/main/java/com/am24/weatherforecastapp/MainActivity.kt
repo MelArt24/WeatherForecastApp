@@ -3,18 +3,18 @@ package com.am24.weatherforecastapp
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
-import androidx.core.content.ContextCompat
-import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.am24.weatherforecastapp.presentation.DialogManager
 import com.am24.weatherforecastapp.presentation.MainViewModel
 import com.am24.weatherforecastapp.presentation.WeatherApp
@@ -30,15 +30,16 @@ class MainActivity : ComponentActivity() {
         val viewModel: MainViewModel by viewModel()
         setContent {
             val context = LocalContext.current
-            val locationPermissionLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestMultiplePermissions()
-            ) { permissions ->
-                if (permissions.values.any { it }) {
-                    checkLocation(viewModel)
-                } else {
-                    Toast.makeText(context, getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
+            val locationPermissionLauncher =
+                rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions(),
+                ) { permissions ->
+                    if (permissions.values.any { it }) {
+                        checkLocation(viewModel)
+                    } else {
+                        Toast.makeText(context, getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
 
             val requestLocation = {
                 if (hasLocationPermission()) {
@@ -47,8 +48,8 @@ class MainActivity : ComponentActivity() {
                     locationPermissionLauncher.launch(
                         arrayOf(
                             Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        )
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                        ),
                     )
                 }
             }
@@ -67,11 +68,14 @@ class MainActivity : ComponentActivity() {
         if (isLocationEnabled()) {
             viewModel.requestCurrentLocationWeather()
         } else {
-            DialogManager.locationSettingsDialog(this, object : DialogManager.Listener {
-                override fun onClick(name: String?) {
-                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                }
-            })
+            DialogManager.locationSettingsDialog(
+                this,
+                object : DialogManager.Listener {
+                    override fun onClick(name: String?) {
+                        startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    }
+                },
+            )
         }
     }
 
@@ -81,13 +85,13 @@ class MainActivity : ComponentActivity() {
             locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
-    private fun hasLocationPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
+    private fun hasLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(
             this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
 }

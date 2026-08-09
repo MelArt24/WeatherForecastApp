@@ -12,7 +12,7 @@ data class WeatherResponseDto(
     @SerialName("current") val current: CurrentWeatherDto,
     @SerialName("hourly") val hourly: HourlyForecastDto,
     @SerialName("daily") val daily: DailyForecastDto,
-    @SerialName("place_id") val placeId: String? = null
+    @SerialName("place_id") val placeId: String? = null,
 )
 
 @Serializable
@@ -20,12 +20,12 @@ data class CurrentWeatherDto(
     @SerialName("icon") val icon: String,
     @SerialName("icon_num") val iconNum: Int,
     @SerialName("summary") val summary: String,
-    @SerialName("temperature") val temperature: Double
+    @SerialName("temperature") val temperature: Double,
 )
 
 @Serializable
 data class HourlyForecastDto(
-    @SerialName("data") val data: List<HourlyDataDto>
+    @SerialName("data") val data: List<HourlyDataDto>,
 )
 
 @Serializable
@@ -34,12 +34,12 @@ data class HourlyDataDto(
     @SerialName("weather") val weather: String,
     @SerialName("icon") val icon: Int,
     @SerialName("summary") val summary: String,
-    @SerialName("temperature") val temperature: Double
+    @SerialName("temperature") val temperature: Double,
 )
 
 @Serializable
 data class DailyForecastDto(
-    @SerialName("data") val data: List<DailyDataDto>
+    @SerialName("data") val data: List<DailyDataDto>,
 )
 
 @Serializable
@@ -48,7 +48,7 @@ data class DailyDataDto(
     @SerialName("weather") val weather: String,
     @SerialName("icon") val icon: Int,
     @SerialName("summary") val summary: String,
-    @SerialName("all_day") val allDay: AllDayDataDto
+    @SerialName("all_day") val allDay: AllDayDataDto,
 )
 
 @Serializable
@@ -57,5 +57,5 @@ data class AllDayDataDto(
     @SerialName("icon") val icon: Int,
     @SerialName("temperature") val temperature: Double? = null,
     @SerialName("temperature_min") val temperatureMin: Double,
-    @SerialName("temperature_max") val temperatureMax: Double
+    @SerialName("temperature_max") val temperatureMax: Double,
 )

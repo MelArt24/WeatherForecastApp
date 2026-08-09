@@ -1,50 +1,53 @@
 package com.am24.weatherforecastapp.data.repository
 
-import com.am24.weatherforecastapp.data.mapper.toDomain
-import com.am24.weatherforecastapp.data.error.toWeatherDomainError
 import com.am24.weatherforecastapp.data.cache.TimeProvider
 import com.am24.weatherforecastapp.data.cache.WeatherCacheKeyFactory
 import com.am24.weatherforecastapp.data.cache.WeatherCachePolicy
+import com.am24.weatherforecastapp.data.error.toWeatherDomainError
 import com.am24.weatherforecastapp.data.local.WeatherLocalDataSource
-import com.am24.weatherforecastapp.domain.network.NetworkMonitor
-import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
-import com.am24.weatherforecastapp.domain.model.WeatherForecast
+import com.am24.weatherforecastapp.data.mapper.toDomain
 import com.am24.weatherforecastapp.data.remote.WeatherApiService
-import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.ApiErrorReason
+import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
+import com.am24.weatherforecastapp.domain.model.WeatherForecast
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.repository.WeatherRepository
-import java.time.ZoneId
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.ZoneId
+import java.util.concurrent.ConcurrentHashMap
 
 class WeatherRepositoryImpl(
     private val apiService: WeatherApiService,
     private val localDataSource: WeatherLocalDataSource,
     private val timeProvider: TimeProvider,
     private val cachePolicy: WeatherCachePolicy,
-    private val networkMonitor: NetworkMonitor = object : NetworkMonitor {
-        override fun isOnline(): Boolean = true
-        override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
-    },
+    private val networkMonitor: NetworkMonitor =
+        object : NetworkMonitor {
+            override fun isOnline(): Boolean = true
+
+            override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
+        },
     private val apiKey: String,
-    private val timezone: String = ZoneId.systemDefault().id
+    private val timezone: String = ZoneId.systemDefault().id,
 ) : WeatherRepository {
     override suspend fun getWeatherData(
         lat: String?,
         lon: String?,
-        city: String?
+        city: String?,
     ): WeatherForecast {
-        val cacheKey = try {
-            WeatherCacheKeyFactory.create(lat, lon, city)
-        } catch (_: Exception) {
-            throw DomainFailureException(DomainError.Api(ApiErrorReason.RequestFailed))
-        }
+        val cacheKey =
+            try {
+                WeatherCacheKeyFactory.create(lat, lon, city)
+            } catch (_: Exception) {
+                throw DomainFailureException(DomainError.Api(ApiErrorReason.RequestFailed))
+            }
 
         return mutexFor(cacheKey).withLock {
             val cached = readCache(cacheKey)
@@ -54,7 +57,7 @@ class WeatherRepositoryImpl(
                 return@withLock cached
                     ?.takeIf { cachePolicy.isUsableOffline(it.cachedAtMillis, now) }
                     ?.forecast ?: throw DomainFailureException(
-                    DomainError.Network(NetworkErrorReason.Offline)
+                    DomainError.Network(NetworkErrorReason.Offline),
                 )
             }
 
@@ -63,13 +66,15 @@ class WeatherRepositoryImpl(
             }
 
             try {
-                val forecast = apiService.getWeatherData(
-                    lat = lat,
-                    lon = lon,
-                    placeId = city?.takeIf { lat == null && lon == null },
-                    timezone = timezone,
-                    apiKey = apiKey
-                ).toDomain()
+                val forecast =
+                    apiService
+                        .getWeatherData(
+                            lat = lat,
+                            lon = lon,
+                            placeId = city?.takeIf { lat == null && lon == null },
+                            timezone = timezone,
+                            apiKey = apiKey,
+                        ).toDomain()
 
                 cacheKeysFor(lat, lon, city).forEach { key -> writeCache(key, forecast, now) }
 
@@ -84,15 +89,20 @@ class WeatherRepositoryImpl(
         }
     }
 
-    private suspend fun readCache(cacheKey: String) = try {
-        localDataSource.getWeather(cacheKey)
-    } catch (cancellation: CancellationException) {
-        throw cancellation
-    } catch (_: Exception) {
-        null
-    }
+    private suspend fun readCache(cacheKey: String) =
+        try {
+            localDataSource.getWeather(cacheKey)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        }
 
-    private suspend fun writeCache(cacheKey: String, forecast: WeatherForecast, now: Long) {
+    private suspend fun writeCache(
+        cacheKey: String,
+        forecast: WeatherForecast,
+        now: Long,
+    ) {
         try {
             localDataSource.saveWeather(cacheKey, forecast, now)
         } catch (cancellation: CancellationException) {
@@ -102,15 +112,19 @@ class WeatherRepositoryImpl(
         }
     }
 
-    private fun mutexFor(cacheKey: String): Mutex =
-        requestMutexes.computeIfAbsent(cacheKey) { Mutex() }
+    private fun mutexFor(cacheKey: String): Mutex = requestMutexes.computeIfAbsent(cacheKey) { Mutex() }
 
-    private fun cacheKeysFor(lat: String?, lon: String?, city: String?): Set<String> = buildSet {
-        add(WeatherCacheKeyFactory.create(lat, lon, city))
-        if (city != null && lat != null && lon != null) {
-            add(WeatherCacheKeyFactory.create(lat = null, lon = null, city = city))
+    private fun cacheKeysFor(
+        lat: String?,
+        lon: String?,
+        city: String?,
+    ): Set<String> =
+        buildSet {
+            add(WeatherCacheKeyFactory.create(lat, lon, city))
+            if (city != null && lat != null && lon != null) {
+                add(WeatherCacheKeyFactory.create(lat = null, lon = null, city = city))
+            }
         }
-    }
 
     private companion object {
         val requestMutexes = ConcurrentHashMap<String, Mutex>()

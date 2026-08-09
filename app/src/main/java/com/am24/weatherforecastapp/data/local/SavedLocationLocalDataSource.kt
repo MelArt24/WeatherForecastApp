@@ -11,11 +11,12 @@ import kotlinx.coroutines.flow.first
 
 interface SavedLocationLocalDataSource {
     suspend fun getLocation(): SavedLocation?
+
     suspend fun saveLocation(location: SavedLocation)
 }
 
 class DataStoreSavedLocationLocalDataSource(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
 ) : SavedLocationLocalDataSource {
     override suspend fun getLocation(): SavedLocation? {
         val preferences = dataStore.data.first()
@@ -32,23 +33,28 @@ class DataStoreSavedLocationLocalDataSource(
             latitude = latitude,
             longitude = longitude,
             placeName = preferences[PLACE_NAME],
-            savedAtMillis = savedAtMillis
+            savedAtMillis = savedAtMillis,
         )
     }
 
     override suspend fun saveLocation(location: SavedLocation) {
         dataStore.edit { preferences ->
             val previousPlaceName = preferences[PLACE_NAME]
-            val sameCoordinates = preferences[LATITUDE] == location.latitude &&
-                preferences[LONGITUDE] == location.longitude
-            val placeName = location.placeName
-                ?: previousPlaceName?.takeIf { sameCoordinates }
+            val sameCoordinates =
+                preferences[LATITUDE] == location.latitude &&
+                    preferences[LONGITUDE] == location.longitude
+            val placeName =
+                location.placeName
+                    ?: previousPlaceName?.takeIf { sameCoordinates }
 
             preferences[LATITUDE] = location.latitude
             preferences[LONGITUDE] = location.longitude
             preferences[SAVED_AT_MILLIS] = location.savedAtMillis
-            if (placeName == null) preferences.remove(PLACE_NAME)
-            else preferences[PLACE_NAME] = placeName
+            if (placeName == null) {
+                preferences.remove(PLACE_NAME)
+            } else {
+                preferences[PLACE_NAME] = placeName
+            }
         }
     }
 

@@ -3,8 +3,8 @@ package com.am24.weatherforecastapp
 import com.am24.weatherforecastapp.domain.model.CurrentWeather
 import com.am24.weatherforecastapp.domain.model.DailyWeather
 import com.am24.weatherforecastapp.domain.model.HourlyWeather
-import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.WeatherCondition
+import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -14,15 +14,17 @@ import java.time.Instant
 import java.time.ZoneId
 
 class MapWeatherForecastToPresentationUseCaseTest {
-    private val useCase = WeatherPresentationMapper(
-        conditionLocalizer = { condition, fallback ->
-            if (condition == WeatherCondition.Unknown) fallback else "localized:$condition"
-        },
-        clock = Clock.fixed(
-            Instant.parse("2026-07-05T12:34:00Z"),
-            ZoneId.of("Europe/Kyiv")
+    private val useCase =
+        WeatherPresentationMapper(
+            conditionLocalizer = { condition, fallback ->
+                if (condition == WeatherCondition.Unknown) fallback else "localized:$condition"
+            },
+            clock =
+                Clock.fixed(
+                    Instant.parse("2026-07-05T12:34:00Z"),
+                    ZoneId.of("Europe/Kyiv"),
+                ),
         )
-    )
 
     @Test
     fun invoke_mapsForecastToCurrentAndDailyWeatherModels() {
@@ -69,13 +71,15 @@ class MapWeatherForecastToPresentationUseCaseTest {
 
     @Test
     fun invoke_localizesStableConditionsAndFallsBackForUnknown() {
-        val forecast = forecast().copy(
-            current = forecast().current.copy(condition = WeatherCondition.Clear),
-            hourly = listOf(
-                forecast().hourly.first().copy(condition = WeatherCondition.Rain),
-                forecast().hourly.first().copy(summary = "Provider fallback")
+        val forecast =
+            forecast().copy(
+                current = forecast().current.copy(condition = WeatherCondition.Clear),
+                hourly =
+                    listOf(
+                        forecast().hourly.first().copy(condition = WeatherCondition.Rain),
+                        forecast().hourly.first().copy(summary = "Provider fallback"),
+                    ),
             )
-        )
 
         val result = useCase(forecast, city = "Kyiv")
         val hours = result.current?.hourlyWeather.orEmpty()
@@ -95,30 +99,33 @@ class MapWeatherForecastToPresentationUseCaseTest {
 
     private fun forecast(
         cityName: String? = "Kyiv",
-        daily: List<DailyWeather> = listOf(
-            DailyWeather(
-                day = "2026-07-05",
-                summary = "Clear",
-                iconCode = 1,
-                temperatureMin = 18.0,
-                temperatureMax = 24.0
-            )
-        )
+        daily: List<DailyWeather> =
+            listOf(
+                DailyWeather(
+                    day = "2026-07-05",
+                    summary = "Clear",
+                    iconCode = 1,
+                    temperatureMin = 18.0,
+                    temperatureMax = 24.0,
+                ),
+            ),
     ) = WeatherForecast(
         cityName = cityName,
-        current = CurrentWeather(
-            summary = "Clear",
-            temperature = 21.4,
-            iconCode = 1
-        ),
-        hourly = listOf(
-            HourlyWeather(
-                date = "2026-07-05T12:00:00",
+        current =
+            CurrentWeather(
                 summary = "Clear",
                 temperature = 21.4,
-                iconCode = 1
-            )
-        ),
-        daily = daily
+                iconCode = 1,
+            ),
+        hourly =
+            listOf(
+                HourlyWeather(
+                    date = "2026-07-05T12:00:00",
+                    summary = "Clear",
+                    temperature = 21.4,
+                    iconCode = 1,
+                ),
+            ),
+        daily = daily,
     )
 }

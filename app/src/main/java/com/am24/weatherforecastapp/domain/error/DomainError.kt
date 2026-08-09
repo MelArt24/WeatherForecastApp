@@ -8,25 +8,31 @@ package com.am24.weatherforecastapp.domain.error
  * code can independently decide how each value should be displayed.
  */
 sealed interface DomainError {
-    data class Network(val reason: NetworkErrorReason) : DomainError
+    data class Network(
+        val reason: NetworkErrorReason,
+    ) : DomainError
 
     data class Api(
         val reason: ApiErrorReason,
-        val statusCode: Int? = null
+        val statusCode: Int? = null,
     ) : DomainError
 
-    data class Location(val reason: LocationErrorReason) : DomainError
+    data class Location(
+        val reason: LocationErrorReason,
+    ) : DomainError
 
     data object Unknown : DomainError
 }
 
 /** Carries a domain failure through suspending APIs without leaking its technical cause. */
-class DomainFailureException(val error: DomainError) : Exception()
+class DomainFailureException(
+    val error: DomainError,
+) : Exception()
 
 enum class NetworkErrorReason {
     Offline,
     Timeout,
-    ConnectionFailed
+    ConnectionFailed,
 }
 
 enum class ApiErrorReason {
@@ -35,11 +41,11 @@ enum class ApiErrorReason {
     RateLimited,
     InvalidResponse,
     ServerError,
-    RequestFailed
+    RequestFailed,
 }
 
 enum class LocationErrorReason {
     PermissionDenied,
     Unavailable,
-    ResolutionFailed
+    ResolutionFailed,
 }

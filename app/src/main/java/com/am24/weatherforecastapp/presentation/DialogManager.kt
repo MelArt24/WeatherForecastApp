@@ -6,7 +6,10 @@ import androidx.appcompat.app.AlertDialog
 import com.am24.weatherforecastapp.R
 
 object DialogManager {
-    fun locationSettingsDialog(context: Context, listener: Listener) {
+    fun locationSettingsDialog(
+        context: Context,
+        listener: Listener,
+    ) {
         val builder = AlertDialog.Builder(context)
         val dialog = builder.create()
 
@@ -18,13 +21,17 @@ object DialogManager {
             dialog.dismiss() // Закриваємо вікно
         }
 
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.cancel)) { _, _ -> dialog.dismiss()
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.cancel)) { _, _ ->
+            dialog.dismiss()
         }
 
         dialog.show()
     }
 
-    fun citySearchDialog(context: Context, listener: Listener) {
+    fun citySearchDialog(
+        context: Context,
+        listener: Listener,
+    ) {
         val builder = AlertDialog.Builder(context)
         val editText = EditText(context)
         builder.setView(editText)
@@ -32,11 +39,13 @@ object DialogManager {
 
         dialog.setTitle(context.getString(R.string.city_name))
         dialog.setMessage(context.getString(R.string.enter_city))
-        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") { _, _ -> listener.onClick(editText.text.toString())
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK") { _, _ ->
+            listener.onClick(editText.text.toString())
             dialog.dismiss()
         }
 
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.cancel)) { _, _ -> dialog.dismiss()
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.cancel)) { _, _ ->
+            dialog.dismiss()
         }
 
         dialog.show()

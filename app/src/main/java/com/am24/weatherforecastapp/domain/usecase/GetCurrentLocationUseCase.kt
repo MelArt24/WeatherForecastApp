@@ -1,11 +1,11 @@
 package com.am24.weatherforecastapp.domain.usecase
 
-import com.am24.weatherforecastapp.domain.network.NetworkMonitor
-import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
 import com.am24.weatherforecastapp.domain.error.NetworkErrorReason
 import com.am24.weatherforecastapp.domain.model.UserLocation
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
+import com.am24.weatherforecastapp.domain.network.isOnlineOrDomainFailure
 import com.am24.weatherforecastapp.domain.repository.LocationRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -13,26 +13,29 @@ import kotlinx.coroutines.flow.flowOf
 
 class GetCurrentLocationUseCase(
     private val locationRepository: LocationRepository,
-    private val networkMonitor: NetworkMonitor = object : NetworkMonitor {
-        override fun isOnline(): Boolean = true
-        override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
-    }
+    private val networkMonitor: NetworkMonitor =
+        object : NetworkMonitor {
+            override fun isOnline(): Boolean = true
+
+            override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
+        },
 ) {
     suspend operator fun invoke(): UserLocation {
         if (!networkMonitor.isOnlineOrDomainFailure()) {
             return loadSavedLocation() ?: throw DomainFailureException(
-                DomainError.Network(NetworkErrorReason.Offline)
+                DomainError.Network(NetworkErrorReason.Offline),
             )
         }
 
-        val currentLocation = try {
-            locationRepository.getCurrentLocation()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (locationFailure: Exception) {
-            val savedLocation = loadSavedLocation()
-            return savedLocation ?: throw locationFailure
-        }
+        val currentLocation =
+            try {
+                locationRepository.getCurrentLocation()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (locationFailure: Exception) {
+                val savedLocation = loadSavedLocation()
+                return savedLocation ?: throw locationFailure
+            }
         try {
             locationRepository.saveLastLocation(currentLocation)
         } catch (cancellation: CancellationException) {
@@ -43,11 +46,12 @@ class GetCurrentLocationUseCase(
         return currentLocation
     }
 
-    private suspend fun loadSavedLocation(): UserLocation? = try {
-        locationRepository.getLastSavedLocation()
-    } catch (cancellation: CancellationException) {
-        throw cancellation
-    } catch (_: Exception) {
-        null
-    }
+    private suspend fun loadSavedLocation(): UserLocation? =
+        try {
+            locationRepository.getLastSavedLocation()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        }
 }

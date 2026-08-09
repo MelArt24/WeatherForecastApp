@@ -19,143 +19,163 @@ import org.junit.Test
 
 class SearchCityWeatherUseCaseTest {
     @Test
-    fun localizedQuery_resolvesCoordinatesAndPreservesLocalizedName() = runTest {
-        val weatherRepository = FakeWeatherRepository()
-        val geocodingRepository = FakeGeocodingRepository(
-            GeocodedLocation(39.9042, 116.4074, "Пекін")
-        )
+    fun localizedQuery_resolvesCoordinatesAndPreservesLocalizedName() =
+        runTest {
+            val weatherRepository = FakeWeatherRepository()
+            val geocodingRepository =
+                FakeGeocodingRepository(
+                    GeocodedLocation(39.9042, 116.4074, "Пекін"),
+                )
 
-        val result = SearchCityWeatherUseCase(
-            weatherRepository,
-            geocodingRepository
-        )("Пекін")
+            val result =
+                SearchCityWeatherUseCase(
+                    weatherRepository,
+                    geocodingRepository,
+                )("Пекін")
 
-        assertEquals("Пекін", geocodingRepository.query)
-        assertEquals("39.9042", weatherRepository.lat)
-        assertEquals("116.4074", weatherRepository.lon)
-        assertEquals(geocodingRepository.query, weatherRepository.city)
-        assertEquals("Пекін", result.city)
-    }
-
-    @Test
-    fun missingLocalizedName_usesNormalizedOriginalQuery() = runTest {
-        val useCase = SearchCityWeatherUseCase(
-            FakeWeatherRepository(),
-            FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, null))
-        )
-
-        val result = useCase("  Київ   Місто ")
-
-        assertEquals("Київ Місто", result.city)
-    }
-
-    @Test
-    fun missingGeocodingResult_producesExactCityNotFoundError() = runTest {
-        val failure = captureFailure {
-            SearchCityWeatherUseCase(
-                FakeWeatherRepository(),
-                FakeGeocodingRepository(null)
-            )("Unknown city")
+            assertEquals("Пекін", geocodingRepository.query)
+            assertEquals("39.9042", weatherRepository.lat)
+            assertEquals("116.4074", weatherRepository.lon)
+            assertEquals(geocodingRepository.query, weatherRepository.city)
+            assertEquals("Пекін", result.city)
         }
 
-        assertEquals(
-            DomainError.Api(ApiErrorReason.NotFound),
-            (failure as DomainFailureException).error
-        )
-    }
-
     @Test
-    fun blankQuery_producesExactRequestFailedError() = runTest {
-        val failure = captureFailure {
-            SearchCityWeatherUseCase(
-                FakeWeatherRepository(),
-                FakeGeocodingRepository(null)
-            )("   ")
+    fun missingLocalizedName_usesNormalizedOriginalQuery() =
+        runTest {
+            val useCase =
+                SearchCityWeatherUseCase(
+                    FakeWeatherRepository(),
+                    FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, null)),
+                )
+
+            val result = useCase("  Київ   Місто ")
+
+            assertEquals("Київ Місто", result.city)
         }
 
-        assertEquals(
-            DomainError.Api(ApiErrorReason.RequestFailed),
-            (failure as DomainFailureException).error
-        )
-    }
-
     @Test
-    fun offlineSearch_usesCachedCityWithoutGeocoding() = runTest {
-        val weatherRepository = FakeWeatherRepository()
-        val geocodingRepository = FakeGeocodingRepository(null)
+    fun missingGeocodingResult_producesExactCityNotFoundError() =
+        runTest {
+            val failure =
+                captureFailure {
+                    SearchCityWeatherUseCase(
+                        FakeWeatherRepository(),
+                        FakeGeocodingRepository(null),
+                    )("Unknown city")
+                }
 
-        val result = SearchCityWeatherUseCase(
-            weatherRepository,
-            geocodingRepository,
-            FakeNetworkMonitor(false)
-        )("  Kyiv ")
-
-        assertEquals("Kyiv", result.city)
-        assertEquals("Kyiv", weatherRepository.city)
-        assertNull(geocodingRepository.query)
-    }
-
-    @Test
-    fun geocodingCancellation_isPropagated() = runTest {
-        val cancellation = CancellationException("cancel geocoding")
-        val useCase = SearchCityWeatherUseCase(
-            FakeWeatherRepository(),
-            FakeGeocodingRepository(result = null, failure = cancellation)
-        )
-
-        assertSame(cancellation, captureFailure { useCase("Kyiv") })
-    }
-
-    @Test
-    fun weatherCancellation_isPropagated() = runTest {
-        val cancellation = CancellationException("cancel weather")
-        val useCase = SearchCityWeatherUseCase(
-            FakeWeatherRepository(failure = cancellation),
-            FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, "Kyiv"))
-        )
-
-        assertSame(cancellation, captureFailure { useCase("Kyiv") })
-    }
-
-    @Test
-    fun mappedGeocodingFailure_isPreserved() = runTest {
-        val error = DomainError.Network(NetworkErrorReason.ConnectionFailed)
-        val useCase = SearchCityWeatherUseCase(
-            FakeWeatherRepository(),
-            FakeGeocodingRepository(
-                result = null,
-                failure = DomainFailureException(error)
+            assertEquals(
+                DomainError.Api(ApiErrorReason.NotFound),
+                (failure as DomainFailureException).error,
             )
-        )
-
-        val failure = captureFailure { useCase("Kyiv") }
-
-        assertSame(error, (failure as DomainFailureException).error)
-    }
+        }
 
     @Test
-    fun mappedWeatherFailure_isPreserved() = runTest {
-        val error = DomainError.Api(ApiErrorReason.ServerError, statusCode = 503)
-        val useCase = SearchCityWeatherUseCase(
-            FakeWeatherRepository(failure = DomainFailureException(error)),
-            FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, "Kyiv"))
-        )
+    fun blankQuery_producesExactRequestFailedError() =
+        runTest {
+            val failure =
+                captureFailure {
+                    SearchCityWeatherUseCase(
+                        FakeWeatherRepository(),
+                        FakeGeocodingRepository(null),
+                    )("   ")
+                }
 
-        val failure = captureFailure { useCase("Kyiv") }
+            assertEquals(
+                DomainError.Api(ApiErrorReason.RequestFailed),
+                (failure as DomainFailureException).error,
+            )
+        }
 
-        assertSame(error, (failure as DomainFailureException).error)
-    }
+    @Test
+    fun offlineSearch_usesCachedCityWithoutGeocoding() =
+        runTest {
+            val weatherRepository = FakeWeatherRepository()
+            val geocodingRepository = FakeGeocodingRepository(null)
 
-    private suspend fun captureFailure(block: suspend () -> Unit): Throwable? = try {
-        block()
-        null
-    } catch (failure: Throwable) {
-        failure
-    }
+            val result =
+                SearchCityWeatherUseCase(
+                    weatherRepository,
+                    geocodingRepository,
+                    FakeNetworkMonitor(false),
+                )("  Kyiv ")
+
+            assertEquals("Kyiv", result.city)
+            assertEquals("Kyiv", weatherRepository.city)
+            assertNull(geocodingRepository.query)
+        }
+
+    @Test
+    fun geocodingCancellation_isPropagated() =
+        runTest {
+            val cancellation = CancellationException("cancel geocoding")
+            val useCase =
+                SearchCityWeatherUseCase(
+                    FakeWeatherRepository(),
+                    FakeGeocodingRepository(result = null, failure = cancellation),
+                )
+
+            assertSame(cancellation, captureFailure { useCase("Kyiv") })
+        }
+
+    @Test
+    fun weatherCancellation_isPropagated() =
+        runTest {
+            val cancellation = CancellationException("cancel weather")
+            val useCase =
+                SearchCityWeatherUseCase(
+                    FakeWeatherRepository(failure = cancellation),
+                    FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, "Kyiv")),
+                )
+
+            assertSame(cancellation, captureFailure { useCase("Kyiv") })
+        }
+
+    @Test
+    fun mappedGeocodingFailure_isPreserved() =
+        runTest {
+            val error = DomainError.Network(NetworkErrorReason.ConnectionFailed)
+            val useCase =
+                SearchCityWeatherUseCase(
+                    FakeWeatherRepository(),
+                    FakeGeocodingRepository(
+                        result = null,
+                        failure = DomainFailureException(error),
+                    ),
+                )
+
+            val failure = captureFailure { useCase("Kyiv") }
+
+            assertSame(error, (failure as DomainFailureException).error)
+        }
+
+    @Test
+    fun mappedWeatherFailure_isPreserved() =
+        runTest {
+            val error = DomainError.Api(ApiErrorReason.ServerError, statusCode = 503)
+            val useCase =
+                SearchCityWeatherUseCase(
+                    FakeWeatherRepository(failure = DomainFailureException(error)),
+                    FakeGeocodingRepository(GeocodedLocation(50.45, 30.52, "Kyiv")),
+                )
+
+            val failure = captureFailure { useCase("Kyiv") }
+
+            assertSame(error, (failure as DomainFailureException).error)
+        }
+
+    private suspend fun captureFailure(block: suspend () -> Unit): Throwable? =
+        try {
+            block()
+            null
+        } catch (failure: Throwable) {
+            failure
+        }
 
     private class FakeGeocodingRepository(
         private val result: GeocodedLocation?,
-        private val failure: Throwable? = null
+        private val failure: Throwable? = null,
     ) : GeocodingRepository {
         var query: String? = null
 
@@ -165,11 +185,14 @@ class SearchCityWeatherUseCaseTest {
             return result
         }
 
-        override suspend fun resolvePlaceName(latitude: Double, longitude: Double): String? = null
+        override suspend fun resolvePlaceName(
+            latitude: Double,
+            longitude: Double,
+        ): String? = null
     }
 
     private class FakeWeatherRepository(
-        private val failure: Throwable? = null
+        private val failure: Throwable? = null,
     ) : WeatherRepository {
         var lat: String? = null
         var lon: String? = null
@@ -178,7 +201,7 @@ class SearchCityWeatherUseCaseTest {
         override suspend fun getWeatherData(
             lat: String?,
             lon: String?,
-            city: String?
+            city: String?,
         ): WeatherForecast {
             failure?.let { throw it }
             this.lat = lat
@@ -188,7 +211,7 @@ class SearchCityWeatherUseCaseTest {
                 cityName = "Beijing",
                 current = CurrentWeather("Clear", 21.4, 2),
                 hourly = emptyList(),
-                daily = emptyList()
+                daily = emptyList(),
             )
         }
     }

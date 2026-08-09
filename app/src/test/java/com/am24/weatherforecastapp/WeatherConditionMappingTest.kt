@@ -29,7 +29,10 @@ class WeatherConditionMappingTest {
         assertEquals(WeatherCondition.Unknown, weatherConditionFromIcon(999))
     }
 
-    private fun assertCodes(condition: WeatherCondition, vararg codes: Int) {
+    private fun assertCodes(
+        condition: WeatherCondition,
+        vararg codes: Int,
+    ) {
         codes.forEach { code -> assertEquals("icon $code", condition, weatherConditionFromIcon(code)) }
     }
 }

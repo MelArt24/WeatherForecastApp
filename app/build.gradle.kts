@@ -12,12 +12,13 @@ plugins {
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
 }
 
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) {
-        load(file.inputStream())
+val localProperties =
+    Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) {
+            load(file.inputStream())
+        }
     }
-}
 val weatherApiKey = localProperties.getProperty("WEATHER_API_KEY") ?: System.getenv("WEATHER_API_KEY") ?: ""
 
 android {
@@ -41,7 +42,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -75,6 +76,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.material3)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     implementation(libs.androidx.activity.ktx)
@@ -115,7 +117,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-    androidTestImplementation (libs.core.ktx)
+    androidTestImplementation(libs.core.ktx)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.2")
@@ -173,7 +175,7 @@ kover {
                     "com.am24.weatherforecastapp.R\$*",
                     "com.am24.weatherforecastapp.*ComposableSingletons*",
                     "com.am24.weatherforecastapp.data.local.*_Impl*",
-                    "com.am24.weatherforecastapp.presentation.theme.*"
+                    "com.am24.weatherforecastapp.presentation.theme.*",
                 )
             }
         }

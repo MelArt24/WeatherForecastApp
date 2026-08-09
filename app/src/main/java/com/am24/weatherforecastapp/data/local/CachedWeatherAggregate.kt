@@ -8,5 +8,5 @@ data class CachedWeatherAggregate(
     @Relation(parentColumn = "cacheKey", entityColumn = "cacheKey")
     val hourly: List<CachedHourlyWeatherEntity>,
     @Relation(parentColumn = "cacheKey", entityColumn = "cacheKey")
-    val daily: List<CachedDailyWeatherEntity>
+    val daily: List<CachedDailyWeatherEntity>,
 )

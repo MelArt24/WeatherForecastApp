@@ -5,8 +5,8 @@ import com.am24.weatherforecastapp.R
 
 object WeatherIconHelper {
     @DrawableRes
-    fun getWeatherIcon(iconCode: String): Int {
-        return when (iconCode) {
+    fun getWeatherIcon(iconCode: String): Int =
+        when (iconCode) {
             "1" -> R.drawable.w1
             "2" -> R.drawable.w2
             "3" -> R.drawable.w3
@@ -45,5 +45,4 @@ object WeatherIconHelper {
             "36" -> R.drawable.w36
             else -> R.drawable.w1
         }
-    }
 }

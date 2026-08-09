@@ -15,8 +15,12 @@ import com.am24.weatherforecastapp.domain.model.weatherConditionFromIcon
 
 fun WeatherResponseDto.toDomain(): WeatherForecast {
     if (
-        lat.isBlank() || lon.isBlank() || timezone.isBlank() || units.isBlank() ||
-        current.summary.isBlank() || !current.temperature.isFinite()
+        lat.isBlank() ||
+        lon.isBlank() ||
+        timezone.isBlank() ||
+        units.isBlank() ||
+        current.summary.isBlank() ||
+        !current.temperature.isFinite()
     ) {
         throw InvalidWeatherResponseException()
     }
@@ -24,44 +28,37 @@ fun WeatherResponseDto.toDomain(): WeatherForecast {
         cityName = this.placeId,
         current = current.toDomain(),
         daily = daily.toDomain(),
-        hourly = hourly.toDomain()
+        hourly = hourly.toDomain(),
     )
 }
 
-fun CurrentWeatherDto.toDomain(): CurrentWeather {
-    return CurrentWeather(
+fun CurrentWeatherDto.toDomain(): CurrentWeather =
+    CurrentWeather(
         summary = this.summary,
         temperature = this.temperature,
         iconCode = this.iconNum,
-        condition = weatherConditionFromIcon(this.iconNum)
+        condition = weatherConditionFromIcon(this.iconNum),
     )
-}
 
-fun DailyForecastDto.toDomain(): List<DailyWeather> {
-    return data.map { it.toDomain() }
-}
+fun DailyForecastDto.toDomain(): List<DailyWeather> = data.map { it.toDomain() }
 
-fun DailyDataDto.toDomain(): DailyWeather {
-    return DailyWeather(
+fun DailyDataDto.toDomain(): DailyWeather =
+    DailyWeather(
         day = this.day,
         summary = this.summary,
         iconCode = this.icon,
         temperatureMin = this.allDay.temperatureMin,
         temperatureMax = this.allDay.temperatureMax,
-        condition = weatherConditionFromIcon(this.icon)
+        condition = weatherConditionFromIcon(this.icon),
     )
-}
 
-fun HourlyForecastDto.toDomain(): List<HourlyWeather> {
-    return data.map { it.toDomain() }
-}
+fun HourlyForecastDto.toDomain(): List<HourlyWeather> = data.map { it.toDomain() }
 
-fun HourlyDataDto.toDomain(): HourlyWeather {
-    return HourlyWeather(
+fun HourlyDataDto.toDomain(): HourlyWeather =
+    HourlyWeather(
         date = this.date,
         summary = this.summary,
         temperature = this.temperature,
         iconCode = this.icon,
-        condition = weatherConditionFromIcon(this.icon)
+        condition = weatherConditionFromIcon(this.icon),
     )
-}

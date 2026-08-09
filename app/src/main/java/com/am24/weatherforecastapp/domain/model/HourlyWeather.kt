@@ -5,5 +5,5 @@ data class HourlyWeather(
     val summary: String,
     val temperature: Double,
     val iconCode: Int,
-    val condition: WeatherCondition = WeatherCondition.Unknown
+    val condition: WeatherCondition = WeatherCondition.Unknown,
 )

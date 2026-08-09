@@ -10,7 +10,7 @@ class WeatherCacheKeyFactoryTest {
     fun coordinates_areTrimmedAndRoundedToStableKeys() {
         assertEquals(
             "lat:50.4501|lon:30.5235",
-            WeatherCacheKeyFactory.create(" 50.45005 ", "30.52345", city = null)
+            WeatherCacheKeyFactory.create(" 50.45005 ", "30.52345", city = null),
         )
     }
 
@@ -18,7 +18,7 @@ class WeatherCacheKeyFactoryTest {
     fun negativeCoordinates_areRoundedConsistently() {
         assertEquals(
             "lat:-33.8689|lon:151.2093",
-            WeatherCacheKeyFactory.create("-33.86885", "151.20925", city = null)
+            WeatherCacheKeyFactory.create("-33.86885", "151.20925", city = null),
         )
     }
 
@@ -26,7 +26,7 @@ class WeatherCacheKeyFactoryTest {
     fun cityName_isTrimmedCollapsedAndCaseNormalized() {
         assertEquals(
             "city:new york",
-            WeatherCacheKeyFactory.create(lat = null, lon = null, city = "  New   YORK  ")
+            WeatherCacheKeyFactory.create(lat = null, lon = null, city = "  New   YORK  "),
         )
     }
 

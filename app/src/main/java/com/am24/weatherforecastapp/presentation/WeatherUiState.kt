@@ -16,7 +16,7 @@ data class WeatherUiState(
     val isRefreshing: Boolean = false,
     val isCitySearchLoading: Boolean = false,
     val isLocationLoading: Boolean = false,
-    val isWeatherLoading: Boolean = false
+    val isWeatherLoading: Boolean = false,
 ) {
     val isLoading: Boolean
         get() = status == WeatherUiStatus.Loading
@@ -33,43 +33,58 @@ enum class WeatherUiStatus {
     Loading,
     Success,
     Empty,
-    Error
+    Error,
 }
 
 sealed interface WeatherUiError {
-    fun messageResource(): Int = when (val error = cause) {
-        is DomainError.Network -> when (error.reason) {
-            NetworkErrorReason.Offline -> R.string.offline_error
-            NetworkErrorReason.Timeout -> R.string.timeout_error
-            NetworkErrorReason.ConnectionFailed -> R.string.connection_error
+    fun messageResource(): Int =
+        when (val error = cause) {
+            is DomainError.Network ->
+                when (error.reason) {
+                    NetworkErrorReason.Offline -> R.string.offline_error
+                    NetworkErrorReason.Timeout -> R.string.timeout_error
+                    NetworkErrorReason.ConnectionFailed -> R.string.connection_error
+                }
+            is DomainError.Api ->
+                when (error.reason) {
+                    ApiErrorReason.Unauthorized -> R.string.api_access_error
+                    ApiErrorReason.NotFound ->
+                        if (this is WeatherUiError.CitySearch) {
+                            R.string.city_not_found
+                        } else {
+                            R.string.weather_not_found
+                        }
+                    ApiErrorReason.RateLimited -> R.string.rate_limit_error
+                    ApiErrorReason.InvalidResponse -> R.string.invalid_response_error
+                    ApiErrorReason.ServerError -> R.string.server_error
+                    ApiErrorReason.RequestFailed -> R.string.weather_error
+                }
+            is DomainError.Location ->
+                when (error.reason) {
+                    LocationErrorReason.PermissionDenied -> R.string.location_permission_denied
+                    LocationErrorReason.Unavailable -> R.string.location_unavailable_error
+                    LocationErrorReason.ResolutionFailed -> R.string.location_resolution_error
+                }
+            DomainError.Unknown -> R.string.unknown_error
         }
-        is DomainError.Api -> when (error.reason) {
-            ApiErrorReason.Unauthorized -> R.string.api_access_error
-            ApiErrorReason.NotFound -> if (this is WeatherUiError.CitySearch) {
-                R.string.city_not_found
-            } else {
-                R.string.weather_not_found
-            }
-            ApiErrorReason.RateLimited -> R.string.rate_limit_error
-            ApiErrorReason.InvalidResponse -> R.string.invalid_response_error
-            ApiErrorReason.ServerError -> R.string.server_error
-            ApiErrorReason.RequestFailed -> R.string.weather_error
-        }
-        is DomainError.Location -> when (error.reason) {
-            LocationErrorReason.PermissionDenied -> R.string.location_permission_denied
-            LocationErrorReason.Unavailable -> R.string.location_unavailable_error
-            LocationErrorReason.ResolutionFailed -> R.string.location_resolution_error
-        }
-        DomainError.Unknown -> R.string.unknown_error
-    }
 
     val cause: DomainError
 
-    data class CitySearch(override val cause: DomainError) : WeatherUiError
-    data class Location(override val cause: DomainError) : WeatherUiError
-    data class Weather(override val cause: DomainError) : WeatherUiError
+    data class CitySearch(
+        override val cause: DomainError,
+    ) : WeatherUiError
+
+    data class Location(
+        override val cause: DomainError,
+    ) : WeatherUiError
+
+    data class Weather(
+        override val cause: DomainError,
+    ) : WeatherUiError
 }
 
 sealed interface WeatherUiEvent {
-    data class ShowError(val error: WeatherUiError) : WeatherUiEvent
+    data class ShowError(
+        val error: WeatherUiError,
+    ) : WeatherUiEvent
 }

@@ -14,35 +14,42 @@ import kotlinx.coroutines.flow.flowOf
 class SearchCityWeatherUseCase(
     private val weatherRepository: WeatherRepository,
     private val geocodingRepository: GeocodingRepository,
-    private val networkMonitor: NetworkMonitor = object : NetworkMonitor {
-        override fun isOnline(): Boolean = true
-        override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
-    }
+    private val networkMonitor: NetworkMonitor =
+        object : NetworkMonitor {
+            override fun isOnline(): Boolean = true
+
+            override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
+        },
 ) {
     suspend operator fun invoke(city: String): CityWeatherResult {
         val normalizedQuery = city.trim().replace(Regex("\\s+"), " ")
-        if (normalizedQuery.isEmpty()) throw DomainFailureException(
-            DomainError.Api(ApiErrorReason.RequestFailed)
-        )
+        if (normalizedQuery.isEmpty()) {
+            throw DomainFailureException(
+                DomainError.Api(ApiErrorReason.RequestFailed),
+            )
+        }
 
         if (!networkMonitor.isOnlineOrDomainFailure()) {
             return CityWeatherResult(
                 forecast = weatherRepository.getWeatherData(city = normalizedQuery),
-                city = normalizedQuery
+                city = normalizedQuery,
             )
         }
 
-        val location = geocodingRepository.searchLocation(normalizedQuery)
-            ?: throw DomainFailureException(DomainError.Api(ApiErrorReason.NotFound))
-        val forecast = weatherRepository.getWeatherData(
-            lat = location.latitude.toString(),
-            lon = location.longitude.toString(),
-            city = normalizedQuery
-        )
+        val location =
+            geocodingRepository.searchLocation(normalizedQuery)
+                ?: throw DomainFailureException(DomainError.Api(ApiErrorReason.NotFound))
+        val forecast =
+            weatherRepository.getWeatherData(
+                lat = location.latitude.toString(),
+                lon = location.longitude.toString(),
+                city = normalizedQuery,
+            )
         return CityWeatherResult(
             forecast = forecast,
-            city = location.localizedName?.takeIf { it.isNotBlank() }
-                ?: normalizedQuery
+            city =
+                location.localizedName?.takeIf { it.isNotBlank() }
+                    ?: normalizedQuery,
         )
     }
 }

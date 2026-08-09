@@ -27,90 +27,110 @@ class AndroidNetworkMonitorTest {
     private val network = mock(Network::class.java)
 
     @Test
-    fun initialValidatedNetwork_emitsOnline() = runBlocking {
-        setCurrentNetwork(validatedCapabilities())
+    fun initialValidatedNetwork_emitsOnline() =
+        runBlocking {
+            setCurrentNetwork(validatedCapabilities())
 
-        assertEquals(true, AndroidNetworkMonitor(connectivityManager).observeConnectivity().take(1).toList().single())
-    }
-
-    @Test
-    fun initialMissingNetwork_emitsOffline() = runBlocking {
-        `when`(connectivityManager.activeNetwork).thenReturn(null)
-
-        assertEquals(false, AndroidNetworkMonitor(connectivityManager).observeConnectivity().take(1).toList().single())
-    }
-
-    @Test
-    fun validatedNetworkGained_emitsOnline() = runBlocking {
-        `when`(connectivityManager.activeNetwork).thenReturn(null)
-        val (emissions, job, callback) = collectConnectivity(2)
-
-        setCurrentNetwork(validatedCapabilities())
-        callback.onAvailable(network)
-        job.join()
-
-        assertEquals(listOf(false, true), emissions)
-    }
+            assertEquals(
+                true,
+                AndroidNetworkMonitor(connectivityManager)
+                    .observeConnectivity()
+                    .take(1)
+                    .toList()
+                    .single(),
+            )
+        }
 
     @Test
-    fun networkLost_emitsOffline() = runBlocking {
-        setCurrentNetwork(validatedCapabilities())
-        val (emissions, job, callback) = collectConnectivity(2)
+    fun initialMissingNetwork_emitsOffline() =
+        runBlocking {
+            `when`(connectivityManager.activeNetwork).thenReturn(null)
 
-        `when`(connectivityManager.activeNetwork).thenReturn(null)
-        callback.onLost(network)
-        job.join()
-
-        assertEquals(listOf(true, false), emissions)
-    }
-
-    @Test
-    fun validationChange_emitsUpdatedConnectivity() = runBlocking {
-        setCurrentNetwork(unvalidatedCapabilities())
-        val (emissions, job, callback) = collectConnectivity(2)
-
-        setCurrentNetwork(validatedCapabilities())
-        callback.onCapabilitiesChanged(network, validatedCapabilities())
-        job.join()
-
-        assertEquals(listOf(false, true), emissions)
-    }
+            assertEquals(
+                false,
+                AndroidNetworkMonitor(connectivityManager)
+                    .observeConnectivity()
+                    .take(1)
+                    .toList()
+                    .single(),
+            )
+        }
 
     @Test
-    fun duplicateCallbacks_areSuppressed() = runBlocking {
-        setCurrentNetwork(unvalidatedCapabilities())
-        val (emissions, job, callback) = collectConnectivity(2)
+    fun validatedNetworkGained_emitsOnline() =
+        runBlocking {
+            `when`(connectivityManager.activeNetwork).thenReturn(null)
+            val (emissions, job, callback) = collectConnectivity(2)
 
-        callback.onAvailable(network)
-        callback.onCapabilitiesChanged(network, unvalidatedCapabilities())
-        setCurrentNetwork(validatedCapabilities())
-        callback.onCapabilitiesChanged(network, validatedCapabilities())
-        job.join()
+            setCurrentNetwork(validatedCapabilities())
+            callback.onAvailable(network)
+            job.join()
 
-        assertEquals(listOf(false, true), emissions)
-    }
+            assertEquals(listOf(false, true), emissions)
+        }
 
     @Test
-    fun collectorCancellation_unregistersCallback() = runBlocking {
-        `when`(connectivityManager.activeNetwork).thenReturn(null)
-        val monitor = AndroidNetworkMonitor(connectivityManager)
-        val job = launch { monitor.observeConnectivity().collect {} }
-        yield()
-        val callback = capturedCallback()
+    fun networkLost_emitsOffline() =
+        runBlocking {
+            setCurrentNetwork(validatedCapabilities())
+            val (emissions, job, callback) = collectConnectivity(2)
 
-        job.cancelAndJoin()
+            `when`(connectivityManager.activeNetwork).thenReturn(null)
+            callback.onLost(network)
+            job.join()
 
-        verify(connectivityManager, times(1)).unregisterNetworkCallback(callback)
-    }
+            assertEquals(listOf(true, false), emissions)
+        }
 
-    private suspend fun collectConnectivity(
-        count: Int
-    ): Triple<MutableList<Boolean>, Job, ConnectivityManager.NetworkCallback> {
+    @Test
+    fun validationChange_emitsUpdatedConnectivity() =
+        runBlocking {
+            setCurrentNetwork(unvalidatedCapabilities())
+            val (emissions, job, callback) = collectConnectivity(2)
+
+            setCurrentNetwork(validatedCapabilities())
+            callback.onCapabilitiesChanged(network, validatedCapabilities())
+            job.join()
+
+            assertEquals(listOf(false, true), emissions)
+        }
+
+    @Test
+    fun duplicateCallbacks_areSuppressed() =
+        runBlocking {
+            setCurrentNetwork(unvalidatedCapabilities())
+            val (emissions, job, callback) = collectConnectivity(2)
+
+            callback.onAvailable(network)
+            callback.onCapabilitiesChanged(network, unvalidatedCapabilities())
+            setCurrentNetwork(validatedCapabilities())
+            callback.onCapabilitiesChanged(network, validatedCapabilities())
+            job.join()
+
+            assertEquals(listOf(false, true), emissions)
+        }
+
+    @Test
+    fun collectorCancellation_unregistersCallback() =
+        runBlocking {
+            `when`(connectivityManager.activeNetwork).thenReturn(null)
+            val monitor = AndroidNetworkMonitor(connectivityManager)
+            val job = launch { monitor.observeConnectivity().collect {} }
+            yield()
+            val callback = capturedCallback()
+
+            job.cancelAndJoin()
+
+            verify(connectivityManager, times(1)).unregisterNetworkCallback(callback)
+        }
+
+    private suspend fun collectConnectivity(count: Int): Triple<MutableList<Boolean>, Job, ConnectivityManager.NetworkCallback> {
         val emissions = mutableListOf<Boolean>()
         val monitor = AndroidNetworkMonitor(connectivityManager)
-        val job = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).launch {
-            monitor.observeConnectivity().take(count).toList(emissions)
-        }
+        val job =
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).launch {
+                monitor.observeConnectivity().take(count).toList(emissions)
+            }
         yield()
         return Triple(emissions, job, capturedCallback())
     }

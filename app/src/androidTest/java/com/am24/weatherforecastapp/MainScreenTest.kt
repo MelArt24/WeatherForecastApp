@@ -36,10 +36,11 @@ class MainScreenTest {
     fun weatherContentAndBanner_areVisibleTogether() {
         showScreen(
             isOnline = false,
-            uiState = WeatherUiState(
-                status = WeatherUiStatus.Success,
-                currentWeather = weather("Kyiv")
-            )
+            uiState =
+                WeatherUiState(
+                    status = WeatherUiStatus.Success,
+                    currentWeather = weather("Kyiv"),
+                ),
         )
 
         composeRule.onNodeWithText("No internet connection").assertIsDisplayed()
@@ -50,23 +51,26 @@ class MainScreenTest {
     fun banner_isVisibleOnInitialErrorScreen() {
         showScreen(
             isOnline = false,
-            uiState = WeatherUiState(
-                status = WeatherUiStatus.Error,
-                error = WeatherUiError.Weather(
-                    DomainError.Network(NetworkErrorReason.Offline)
-                )
-            )
+            uiState =
+                WeatherUiState(
+                    status = WeatherUiStatus.Error,
+                    error =
+                        WeatherUiError.Weather(
+                            DomainError.Network(NetworkErrorReason.Offline),
+                        ),
+                ),
         )
 
         composeRule.onNodeWithText("No internet connection").assertIsDisplayed()
-        composeRule.onNodeWithText(
-            "No internet connection and no cached weather is available"
-        ).assertIsDisplayed()
+        composeRule
+            .onNodeWithText(
+                "No internet connection and no cached weather is available",
+            ).assertIsDisplayed()
     }
 
     private fun showScreen(
         isOnline: Boolean,
-        uiState: WeatherUiState = WeatherUiState()
+        uiState: WeatherUiState = WeatherUiState(),
     ) {
         composeRule.setContent {
             WeatherForecastAppTheme {
@@ -76,20 +80,21 @@ class MainScreenTest {
                     onRetry = {},
                     onSearchClick = {},
                     onLocationClick = {},
-                    onDayClick = {}
+                    onDayClick = {},
                 )
             }
         }
     }
 
-    private fun weather(city: String) = WeatherModel(
-        city = city,
-        time = "Now",
-        condition = "Clear",
-        currentTemperature = "20",
-        minimumTemperature = "10",
-        maximumTemperature = "22",
-        imageURL = "1",
-        hourlyWeather = emptyList()
-    )
+    private fun weather(city: String) =
+        WeatherModel(
+            city = city,
+            time = "Now",
+            condition = "Clear",
+            currentTemperature = "20",
+            minimumTemperature = "10",
+            maximumTemperature = "22",
+            imageURL = "1",
+            hourlyWeather = emptyList(),
+        )
 }

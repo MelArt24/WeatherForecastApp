@@ -1,34 +1,35 @@
 package com.am24.weatherforecastapp.di
 
-import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
-import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
+import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
+import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import org.koin.dsl.module
 
-val useCaseModule = module {
-    factory {
-        GetCurrentLocationUseCase(
-            locationRepository = get(),
-            networkMonitor = get()
-        )
-    }
+val useCaseModule =
+    module {
+        factory {
+            GetCurrentLocationUseCase(
+                locationRepository = get(),
+                networkMonitor = get(),
+            )
+        }
 
-    factory {
-        GetCurrentWeatherUseCase(
-            weatherRepository = get()
-        )
-    }
+        factory {
+            GetCurrentWeatherUseCase(
+                weatherRepository = get(),
+            )
+        }
 
-    factory {
-        SearchCityWeatherUseCase(
-            weatherRepository = get(),
-            geocodingRepository = get(),
-            networkMonitor = get()
-        )
-    }
+        factory {
+            SearchCityWeatherUseCase(
+                weatherRepository = get(),
+                geocodingRepository = get(),
+                networkMonitor = get(),
+            )
+        }
 
-    factory {
-        WeatherPresentationMapper(conditionLocalizer = get())
+        factory {
+            WeatherPresentationMapper(conditionLocalizer = get())
+        }
     }
-}

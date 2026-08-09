@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.am24.weatherforecastapp.domain.error.DomainError
 import com.am24.weatherforecastapp.domain.error.DomainFailureException
+import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentLocationUseCase
 import com.am24.weatherforecastapp.domain.usecase.GetCurrentWeatherUseCase
 import com.am24.weatherforecastapp.domain.usecase.SearchCityWeatherUseCase
-import com.am24.weatherforecastapp.domain.network.NetworkMonitor
 import com.am24.weatherforecastapp.presentation.mapper.WeatherPresentationMapper
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import kotlinx.coroutines.CancellationException
@@ -26,9 +26,8 @@ class MainViewModel(
     private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
     private val searchCityWeatherUseCase: SearchCityWeatherUseCase,
     private val weatherPresentationMapper: WeatherPresentationMapper,
-    networkMonitor: NetworkMonitor
+    networkMonitor: NetworkMonitor,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(WeatherUiState())
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
 
@@ -55,62 +54,66 @@ class MainViewModel(
     fun requestCityWeather(city: String) {
         lastRequest = Request.City(city)
         val id = beginRequest(Operation.CitySearch)
-        weatherRequestJob = viewModelScope.launch {
-            try {
-                val result = searchCityWeatherUseCase(city)
-                val weather = weatherPresentationMapper(result.forecast, result.city)
-                showWeather(id, weather.current, weather.daily)
-            } catch (cancellation: CancellationException) {
-                clearCancelledRequest(id)
-                throw cancellation
-            } catch (failure: DomainFailureException) {
-                showError(id, WeatherUiError.CitySearch(failure.error))
-            } catch (e: Exception) {
-                showError(id, WeatherUiError.CitySearch(DomainError.Unknown))
-            } finally {
-                finishRequest(id)
+        weatherRequestJob =
+            viewModelScope.launch {
+                try {
+                    val result = searchCityWeatherUseCase(city)
+                    val weather = weatherPresentationMapper(result.forecast, result.city)
+                    showWeather(id, weather.current, weather.daily)
+                } catch (cancellation: CancellationException) {
+                    clearCancelledRequest(id)
+                    throw cancellation
+                } catch (failure: DomainFailureException) {
+                    showError(id, WeatherUiError.CitySearch(failure.error))
+                } catch (e: Exception) {
+                    showError(id, WeatherUiError.CitySearch(DomainError.Unknown))
+                } finally {
+                    finishRequest(id)
+                }
             }
-        }
     }
 
     fun requestCurrentLocationWeather() {
         lastRequest = Request.CurrentLocation
         val id = beginRequest(Operation.Location)
-        weatherRequestJob = viewModelScope.launch {
-            val location = try {
-                getCurrentLocationUseCase()
-            } catch (cancellation: CancellationException) {
-                clearCancelledRequest(id)
-                throw cancellation
-            } catch (failure: DomainFailureException) {
-                showError(id, WeatherUiError.Location(failure.error))
-                finishRequest(id)
-                return@launch
-            } catch (locationFailure: Exception) {
-                showError(id, WeatherUiError.Location(DomainError.Unknown))
-                finishRequest(id)
-                return@launch
-            }
+        weatherRequestJob =
+            viewModelScope.launch {
+                val location =
+                    try {
+                        getCurrentLocationUseCase()
+                    } catch (cancellation: CancellationException) {
+                        clearCancelledRequest(id)
+                        throw cancellation
+                    } catch (failure: DomainFailureException) {
+                        showError(id, WeatherUiError.Location(failure.error))
+                        finishRequest(id)
+                        return@launch
+                    } catch (locationFailure: Exception) {
+                        showError(id, WeatherUiError.Location(DomainError.Unknown))
+                        finishRequest(id)
+                        return@launch
+                    }
 
-            try {
-                startWeatherLoading(id)
-                val response = getCurrentWeatherUseCase(
-                    location.latitude.toString(),
-                    location.longitude.toString()
-                )
-                val weather = weatherPresentationMapper(response, location.placeName)
-                showWeather(id, weather.current, weather.daily)
-            } catch (cancellation: CancellationException) {
-                clearCancelledRequest(id)
-                throw cancellation
-            } catch (failure: DomainFailureException) {
-                showError(id, WeatherUiError.Weather(failure.error))
-            } catch (weatherFailure: Exception) {
-                showError(id, WeatherUiError.Weather(DomainError.Unknown))
-            } finally {
-                finishRequest(id)
+                try {
+                    startWeatherLoading(id)
+                    val response =
+                        getCurrentWeatherUseCase(
+                            location.latitude.toString(),
+                            location.longitude.toString(),
+                        )
+                    val weather = weatherPresentationMapper(response, location.placeName)
+                    showWeather(id, weather.current, weather.daily)
+                } catch (cancellation: CancellationException) {
+                    clearCancelledRequest(id)
+                    throw cancellation
+                } catch (failure: DomainFailureException) {
+                    showError(id, WeatherUiError.Weather(failure.error))
+                } catch (weatherFailure: Exception) {
+                    showError(id, WeatherUiError.Weather(DomainError.Unknown))
+                } finally {
+                    finishRequest(id)
+                }
             }
-        }
     }
 
     fun retryLastRequest() {
@@ -131,7 +134,7 @@ class MainViewModel(
                 isRefreshing = state.hasWeather,
                 isCitySearchLoading = operation == Operation.CitySearch,
                 isLocationLoading = operation == Operation.Location,
-                isWeatherLoading = false
+                isWeatherLoading = false,
             )
         }
         return id
@@ -144,13 +147,18 @@ class MainViewModel(
         }
     }
 
-    private fun showWeather(id: Long, current: WeatherModel?, daily: List<WeatherModel>) {
+    private fun showWeather(
+        id: Long,
+        current: WeatherModel?,
+        daily: List<WeatherModel>,
+    ) {
         if (id != requestId) return
-        val status = if (current == null && daily.isEmpty()) {
-            WeatherUiStatus.Empty
-        } else {
-            WeatherUiStatus.Success
-        }
+        val status =
+            if (current == null && daily.isEmpty()) {
+                WeatherUiStatus.Empty
+            } else {
+                WeatherUiStatus.Success
+            }
         _uiState.update {
             it.copy(
                 status = status,
@@ -161,12 +169,15 @@ class MainViewModel(
                 isRefreshing = false,
                 isCitySearchLoading = false,
                 isLocationLoading = false,
-                isWeatherLoading = false
+                isWeatherLoading = false,
             )
         }
     }
 
-    private suspend fun showError(id: Long, error: WeatherUiError) {
+    private suspend fun showError(
+        id: Long,
+        error: WeatherUiError,
+    ) {
         if (id != requestId) return
         val hasWeather = _uiState.value.hasWeather
         _uiState.update { state ->
@@ -176,7 +187,7 @@ class MainViewModel(
                 state.copy(
                     status = WeatherUiStatus.Error,
                     error = error,
-                    isRefreshing = false
+                    isRefreshing = false,
                 )
             }
         }
@@ -189,16 +200,17 @@ class MainViewModel(
         if (id != requestId) return
         _uiState.update { state ->
             state.copy(
-                status = if (state.status == WeatherUiStatus.Loading) {
-                    WeatherUiStatus.Initial
-                } else {
-                    state.status
-                },
+                status =
+                    if (state.status == WeatherUiStatus.Loading) {
+                        WeatherUiStatus.Initial
+                    } else {
+                        state.status
+                    },
                 error = null,
                 isRefreshing = false,
                 isCitySearchLoading = false,
                 isLocationLoading = false,
-                isWeatherLoading = false
+                isWeatherLoading = false,
             )
         }
     }
@@ -210,19 +222,21 @@ class MainViewModel(
                 isRefreshing = false,
                 isCitySearchLoading = false,
                 isLocationLoading = false,
-                isWeatherLoading = false
+                isWeatherLoading = false,
             )
         }
     }
 
     private enum class Operation {
         CitySearch,
-        Location
+        Location,
     }
 
     private sealed interface Request {
-        data class City(val city: String) : Request
+        data class City(
+            val city: String,
+        ) : Request
+
         data object CurrentLocation : Request
     }
-
 }

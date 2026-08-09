@@ -11,19 +11,21 @@ data class CachedWeatherEntity(
     val currentSummary: String,
     val currentTemperature: Double,
     val currentIconCode: Int,
-    val cachedAtMillis: Long
+    val cachedAtMillis: Long,
 )
 
 @Entity(
     tableName = "cached_hourly_weather",
     primaryKeys = ["cacheKey", "position"],
-    foreignKeys = [ForeignKey(
-        entity = CachedWeatherEntity::class,
-        parentColumns = ["cacheKey"],
-        childColumns = ["cacheKey"],
-        onDelete = ForeignKey.CASCADE
-    )],
-    indices = [Index("cacheKey")]
+    foreignKeys = [
+        ForeignKey(
+            entity = CachedWeatherEntity::class,
+            parentColumns = ["cacheKey"],
+            childColumns = ["cacheKey"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("cacheKey")],
 )
 data class CachedHourlyWeatherEntity(
     val cacheKey: String,
@@ -31,19 +33,21 @@ data class CachedHourlyWeatherEntity(
     val date: String,
     val summary: String,
     val temperature: Double,
-    val iconCode: Int
+    val iconCode: Int,
 )
 
 @Entity(
     tableName = "cached_daily_weather",
     primaryKeys = ["cacheKey", "position"],
-    foreignKeys = [ForeignKey(
-        entity = CachedWeatherEntity::class,
-        parentColumns = ["cacheKey"],
-        childColumns = ["cacheKey"],
-        onDelete = ForeignKey.CASCADE
-    )],
-    indices = [Index("cacheKey")]
+    foreignKeys = [
+        ForeignKey(
+            entity = CachedWeatherEntity::class,
+            parentColumns = ["cacheKey"],
+            childColumns = ["cacheKey"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("cacheKey")],
 )
 data class CachedDailyWeatherEntity(
     val cacheKey: String,
@@ -52,5 +56,5 @@ data class CachedDailyWeatherEntity(
     val summary: String,
     val iconCode: Int,
     val temperatureMin: Double,
-    val temperatureMax: Double
+    val temperatureMax: Double,
 )

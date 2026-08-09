@@ -1,9 +1,7 @@
 package com.am24.weatherforecastapp
 
-import com.am24.weatherforecastapp.data.mapper.toDomain
 import com.am24.weatherforecastapp.data.error.InvalidWeatherResponseException
-import com.am24.weatherforecastapp.domain.model.DailyWeather
-import com.am24.weatherforecastapp.domain.model.HourlyWeather
+import com.am24.weatherforecastapp.data.mapper.toDomain
 import com.am24.weatherforecastapp.data.remote.AllDayDataDto
 import com.am24.weatherforecastapp.data.remote.CurrentWeatherDto
 import com.am24.weatherforecastapp.data.remote.DailyDataDto
@@ -11,20 +9,22 @@ import com.am24.weatherforecastapp.data.remote.DailyForecastDto
 import com.am24.weatherforecastapp.data.remote.HourlyDataDto
 import com.am24.weatherforecastapp.data.remote.HourlyForecastDto
 import com.am24.weatherforecastapp.data.remote.WeatherResponseDto
+import com.am24.weatherforecastapp.domain.model.DailyWeather
+import com.am24.weatherforecastapp.domain.model.HourlyWeather
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class WeatherMapperTest {
-
     @Test
     fun `CurrentWeatherDto toDomain maps dto to CurrentWeather`() {
-        val dto = CurrentWeatherDto(
-            summary = "Clear sky",
-            temperature = 21.5,
-            iconNum = 2,
-            icon = ""
-        )
+        val dto =
+            CurrentWeatherDto(
+                summary = "Clear sky",
+                temperature = 21.5,
+                iconNum = 2,
+                icon = "",
+            )
 
         val result = dto.toDomain()
 
@@ -35,19 +35,21 @@ class WeatherMapperTest {
 
     @Test
     fun `DailyDataDto toDomain maps dto to DailyWeather`() {
-        val dto = DailyDataDto(
-            day = "2026-07-06",
-            weather = "clear",
-            icon = 1,
-            summary = "Sunny day",
-            allDay = AllDayDataDto(
+        val dto =
+            DailyDataDto(
+                day = "2026-07-06",
                 weather = "clear",
                 icon = 1,
-                temperature = 24.0,
-                temperatureMin = 18.5,
-                temperatureMax = 27.3
+                summary = "Sunny day",
+                allDay =
+                    AllDayDataDto(
+                        weather = "clear",
+                        icon = 1,
+                        temperature = 24.0,
+                        temperatureMin = 18.5,
+                        temperatureMax = 27.3,
+                    ),
             )
-        )
 
         val result = dto.toDomain()
 
@@ -60,36 +62,40 @@ class WeatherMapperTest {
 
     @Test
     fun `DailyForecastDto toDomain maps all daily items`() {
-        val dto = DailyForecastDto(
-            data = listOf(
-                DailyDataDto(
-                    day = "2026-07-06",
-                    weather = "clear",
-                    icon = 1,
-                    summary = "Sunny",
-                    allDay = AllDayDataDto(
-                        weather = "clear",
-                        icon = 1,
-                        temperature = 24.0,
-                        temperatureMin = 18.0,
-                        temperatureMax = 28.0
-                    )
-                ),
-                DailyDataDto(
-                    day = "2026-07-07",
-                    weather = "rain",
-                    icon = 5,
-                    summary = "Rainy",
-                    allDay = AllDayDataDto(
-                        weather = "rain",
-                        icon = 5,
-                        temperature = 19.0,
-                        temperatureMin = 15.0,
-                        temperatureMax = 21.0
-                    )
-                )
+        val dto =
+            DailyForecastDto(
+                data =
+                    listOf(
+                        DailyDataDto(
+                            day = "2026-07-06",
+                            weather = "clear",
+                            icon = 1,
+                            summary = "Sunny",
+                            allDay =
+                                AllDayDataDto(
+                                    weather = "clear",
+                                    icon = 1,
+                                    temperature = 24.0,
+                                    temperatureMin = 18.0,
+                                    temperatureMax = 28.0,
+                                ),
+                        ),
+                        DailyDataDto(
+                            day = "2026-07-07",
+                            weather = "rain",
+                            icon = 5,
+                            summary = "Rainy",
+                            allDay =
+                                AllDayDataDto(
+                                    weather = "rain",
+                                    icon = 5,
+                                    temperature = 19.0,
+                                    temperatureMin = 15.0,
+                                    temperatureMax = 21.0,
+                                ),
+                        ),
+                    ),
             )
-        )
 
         val result = dto.toDomain()
 
@@ -110,13 +116,14 @@ class WeatherMapperTest {
 
     @Test
     fun `HourlyDataDto toDomain maps dto to HourlyWeather`() {
-        val dto = HourlyDataDto(
-            date = "2026-07-06T15:00:00",
-            weather = "cloudy",
-            icon = 3,
-            summary = "Partly cloudy",
-            temperature = 22.7
-        )
+        val dto =
+            HourlyDataDto(
+                date = "2026-07-06T15:00:00",
+                weather = "cloudy",
+                icon = 3,
+                summary = "Partly cloudy",
+                temperature = 22.7,
+            )
 
         val result = dto.toDomain()
 
@@ -128,24 +135,26 @@ class WeatherMapperTest {
 
     @Test
     fun `HourlyForecastDto toDomain maps all hourly items`() {
-        val dto = HourlyForecastDto(
-            data = listOf(
-                HourlyDataDto(
-                    date = "2026-07-06T12:00:00",
-                    weather = "clear",
-                    icon = 1,
-                    summary = "Sunny",
-                    temperature = 23.0
-                ),
-                HourlyDataDto(
-                    date = "2026-07-06T15:00:00",
-                    weather = "rain",
-                    icon = 5,
-                    summary = "Light rain",
-                    temperature = 20.0
-                )
+        val dto =
+            HourlyForecastDto(
+                data =
+                    listOf(
+                        HourlyDataDto(
+                            date = "2026-07-06T12:00:00",
+                            weather = "clear",
+                            icon = 1,
+                            summary = "Sunny",
+                            temperature = 23.0,
+                        ),
+                        HourlyDataDto(
+                            date = "2026-07-06T15:00:00",
+                            weather = "rain",
+                            icon = 5,
+                            summary = "Light rain",
+                            temperature = 20.0,
+                        ),
+                    ),
             )
-        )
 
         val result = dto.toDomain()
 
@@ -164,47 +173,54 @@ class WeatherMapperTest {
 
     @Test
     fun `WeatherResponseDto toDomain maps full response to WeatherForecast`() {
-        val dto = WeatherResponseDto(
-            lat = "50.45",
-            lon = "30.52",
-            timezone = "Europe/Kyiv",
-            units = "metric",
-            placeId = "Kyiv",
-            current = CurrentWeatherDto(
-                summary = "Clear sky",
-                temperature = 21.5,
-                iconNum = 2,
-                icon = ""
-            ),
-            daily = DailyForecastDto(
-                data = listOf(
-                    DailyDataDto(
-                        day = "2026-07-06",
-                        weather = "clear",
-                        icon = 1,
-                        summary = "Sunny day",
-                        allDay = AllDayDataDto(
-                            weather = "clear",
-                            icon = 1,
-                            temperature = 24.0,
-                            temperatureMin = 18.5,
-                            temperatureMax = 27.3
-                        )
-                    )
-                )
-            ),
-            hourly = HourlyForecastDto(
-                data = listOf(
-                    HourlyDataDto(
-                        date = "2026-07-06T15:00:00",
-                        weather = "cloudy",
-                        icon = 3,
-                        summary = "Partly cloudy",
-                        temperature = 22.7
-                    )
-                )
+        val dto =
+            WeatherResponseDto(
+                lat = "50.45",
+                lon = "30.52",
+                timezone = "Europe/Kyiv",
+                units = "metric",
+                placeId = "Kyiv",
+                current =
+                    CurrentWeatherDto(
+                        summary = "Clear sky",
+                        temperature = 21.5,
+                        iconNum = 2,
+                        icon = "",
+                    ),
+                daily =
+                    DailyForecastDto(
+                        data =
+                            listOf(
+                                DailyDataDto(
+                                    day = "2026-07-06",
+                                    weather = "clear",
+                                    icon = 1,
+                                    summary = "Sunny day",
+                                    allDay =
+                                        AllDayDataDto(
+                                            weather = "clear",
+                                            icon = 1,
+                                            temperature = 24.0,
+                                            temperatureMin = 18.5,
+                                            temperatureMax = 27.3,
+                                        ),
+                                ),
+                            ),
+                    ),
+                hourly =
+                    HourlyForecastDto(
+                        data =
+                            listOf(
+                                HourlyDataDto(
+                                    date = "2026-07-06T15:00:00",
+                                    weather = "cloudy",
+                                    icon = 3,
+                                    summary = "Partly cloudy",
+                                    temperature = 22.7,
+                                ),
+                            ),
+                    ),
             )
-        )
 
         val result = dto.toDomain()
 
@@ -230,21 +246,23 @@ class WeatherMapperTest {
 
     @Test
     fun `WeatherResponseDto toDomain uses empty cityName when placeId is null`() {
-        val dto = WeatherResponseDto(
-            lat = "50.45",
-            lon = "30.52",
-            timezone = "Europe/Kyiv",
-            units = "metric",
-            placeId = null,
-            current = CurrentWeatherDto(
-                summary = "Clear sky",
-                temperature = 21.5,
-                iconNum = 2,
-                icon = ""
-            ),
-            daily = DailyForecastDto(data = emptyList()),
-            hourly = HourlyForecastDto(data = emptyList())
-        )
+        val dto =
+            WeatherResponseDto(
+                lat = "50.45",
+                lon = "30.52",
+                timezone = "Europe/Kyiv",
+                units = "metric",
+                placeId = null,
+                current =
+                    CurrentWeatherDto(
+                        summary = "Clear sky",
+                        temperature = 21.5,
+                        iconNum = 2,
+                        icon = "",
+                    ),
+                daily = DailyForecastDto(data = emptyList()),
+                hourly = HourlyForecastDto(data = emptyList()),
+            )
 
         val result = dto.toDomain()
 
@@ -256,13 +274,14 @@ class WeatherMapperTest {
     @Test
     fun `WeatherResponseDto toDomain rejects blank required fields`() {
         val valid = validResponse()
-        val invalidResponses = listOf(
-            valid.copy(lat = ""),
-            valid.copy(lon = " "),
-            valid.copy(timezone = ""),
-            valid.copy(units = " "),
-            valid.copy(current = valid.current.copy(summary = ""))
-        )
+        val invalidResponses =
+            listOf(
+                valid.copy(lat = ""),
+                valid.copy(lon = " "),
+                valid.copy(timezone = ""),
+                valid.copy(units = " "),
+                valid.copy(current = valid.current.copy(summary = "")),
+            )
 
         invalidResponses.forEach { dto ->
             assertThrows(InvalidWeatherResponseException::class.java) { dto.toDomain() }
@@ -272,9 +291,10 @@ class WeatherMapperTest {
     @Test
     fun `WeatherResponseDto toDomain rejects non-finite current temperatures`() {
         listOf(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY).forEach { value ->
-            val dto = validResponse().let { valid ->
-                valid.copy(current = valid.current.copy(temperature = value))
-            }
+            val dto =
+                validResponse().let { valid ->
+                    valid.copy(current = valid.current.copy(temperature = value))
+                }
 
             assertThrows(InvalidWeatherResponseException::class.java) { dto.toDomain() }
         }
@@ -282,28 +302,32 @@ class WeatherMapperTest {
 
     @Test
     fun `WeatherResponseDto toDomain supports empty forecast collections`() {
-        val result = validResponse().copy(
-            hourly = HourlyForecastDto(emptyList()),
-            daily = DailyForecastDto(emptyList())
-        ).toDomain()
+        val result =
+            validResponse()
+                .copy(
+                    hourly = HourlyForecastDto(emptyList()),
+                    daily = DailyForecastDto(emptyList()),
+                ).toDomain()
 
         assertEquals(emptyList<HourlyWeather>(), result.hourly)
         assertEquals(emptyList<DailyWeather>(), result.daily)
     }
 
-    private fun validResponse() = WeatherResponseDto(
-        lat = "50.45",
-        lon = "30.52",
-        timezone = "Europe/Kyiv",
-        units = "metric",
-        placeId = "Kyiv",
-        current = CurrentWeatherDto(
-            summary = "Clear sky",
-            temperature = 21.5,
-            iconNum = 2,
-            icon = "clear"
-        ),
-        daily = DailyForecastDto(emptyList()),
-        hourly = HourlyForecastDto(emptyList())
-    )
+    private fun validResponse() =
+        WeatherResponseDto(
+            lat = "50.45",
+            lon = "30.52",
+            timezone = "Europe/Kyiv",
+            units = "metric",
+            placeId = "Kyiv",
+            current =
+                CurrentWeatherDto(
+                    summary = "Clear sky",
+                    temperature = 21.5,
+                    iconNum = 2,
+                    icon = "clear",
+                ),
+            daily = DailyForecastDto(emptyList()),
+            hourly = HourlyForecastDto(emptyList()),
+        )
 }

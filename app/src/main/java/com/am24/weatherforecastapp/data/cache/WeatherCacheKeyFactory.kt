@@ -7,15 +7,22 @@ import java.util.Locale
 object WeatherCacheKeyFactory {
     private const val COORDINATE_SCALE = 4
 
-    fun create(lat: String?, lon: String?, city: String?): String {
+    fun create(
+        lat: String?,
+        lon: String?,
+        city: String?,
+    ): String {
         if (lat != null || lon != null) {
             require(lat != null && lon != null) { "Both latitude and longitude are required" }
             return "lat:${normalizeCoordinate(lat)}|lon:${normalizeCoordinate(lon)}"
         }
 
-        val normalizedCity = city?.trim()?.replace(Regex("\\s+"), " ")
-            ?.lowercase(Locale.ROOT)
-            ?.takeIf { it.isNotEmpty() }
+        val normalizedCity =
+            city
+                ?.trim()
+                ?.replace(Regex("\\s+"), " ")
+                ?.lowercase(Locale.ROOT)
+                ?.takeIf { it.isNotEmpty() }
         requireNotNull(normalizedCity) { "Coordinates or city are required" }
         return "city:$normalizedCity"
     }

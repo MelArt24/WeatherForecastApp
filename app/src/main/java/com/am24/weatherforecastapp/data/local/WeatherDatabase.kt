@@ -7,10 +7,10 @@ import androidx.room.RoomDatabase
     entities = [
         CachedWeatherEntity::class,
         CachedHourlyWeatherEntity::class,
-        CachedDailyWeatherEntity::class
+        CachedDailyWeatherEntity::class,
     ],
     version = 1,
-    exportSchema = true
+    exportSchema = true,
 )
 abstract class WeatherDatabase : RoomDatabase() {
     abstract fun weatherDao(): WeatherDao

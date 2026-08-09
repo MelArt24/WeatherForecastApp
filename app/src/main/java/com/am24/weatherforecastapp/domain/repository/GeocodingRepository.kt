@@ -7,6 +7,6 @@ interface GeocodingRepository {
 
     suspend fun resolvePlaceName(
         latitude: Double,
-        longitude: Double
+        longitude: Double,
     ): String?
 }

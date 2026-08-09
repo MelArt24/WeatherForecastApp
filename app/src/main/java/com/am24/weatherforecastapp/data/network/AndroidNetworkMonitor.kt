@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class AndroidNetworkMonitor internal constructor(
-    private val connectivityManager: ConnectivityManager
+    private val connectivityManager: ConnectivityManager,
 ) : NetworkMonitor {
     constructor(context: Context) : this(
-        context.applicationContext.getSystemService(ConnectivityManager::class.java)
+        context.applicationContext.getSystemService(ConnectivityManager::class.java),
     )
 
     override fun isOnline(): Boolean {
@@ -23,29 +23,31 @@ class AndroidNetworkMonitor internal constructor(
         return hasValidatedInternet(capabilities)
     }
 
-    override fun observeConnectivity(): Flow<Boolean> = callbackFlow {
-        fun emitCurrentConnectivity() {
-            trySend(isOnline())
-        }
-
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) = emitCurrentConnectivity()
-
-            override fun onLost(network: Network) = emitCurrentConnectivity()
-
-            override fun onCapabilitiesChanged(
-                network: Network,
-                networkCapabilities: NetworkCapabilities
-            ) {
-                emitCurrentConnectivity()
+    override fun observeConnectivity(): Flow<Boolean> =
+        callbackFlow {
+            fun emitCurrentConnectivity() {
+                trySend(isOnline())
             }
-        }
 
-        connectivityManager.registerDefaultNetworkCallback(callback)
-        emitCurrentConnectivity()
+            val callback =
+                object : ConnectivityManager.NetworkCallback() {
+                    override fun onAvailable(network: Network) = emitCurrentConnectivity()
 
-        awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
-    }.distinctUntilChanged()
+                    override fun onLost(network: Network) = emitCurrentConnectivity()
+
+                    override fun onCapabilitiesChanged(
+                        network: Network,
+                        networkCapabilities: NetworkCapabilities,
+                    ) {
+                        emitCurrentConnectivity()
+                    }
+                }
+
+            connectivityManager.registerDefaultNetworkCallback(callback)
+            emitCurrentConnectivity()
+
+            awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
+        }.distinctUntilChanged()
 
     private fun hasValidatedInternet(capabilities: NetworkCapabilities): Boolean =
         capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&

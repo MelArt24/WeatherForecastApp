@@ -15,7 +15,7 @@ class WeatherUiErrorTest {
         assertMessage(R.string.timeout_error, DomainError.Network(NetworkErrorReason.Timeout))
         assertMessage(
             R.string.connection_error,
-            DomainError.Network(NetworkErrorReason.ConnectionFailed)
+            DomainError.Network(NetworkErrorReason.ConnectionFailed),
         )
     }
 
@@ -26,15 +26,16 @@ class WeatherUiErrorTest {
         assertMessage(R.string.rate_limit_error, DomainError.Api(ApiErrorReason.RateLimited))
         assertMessage(
             R.string.invalid_response_error,
-            DomainError.Api(ApiErrorReason.InvalidResponse)
+            DomainError.Api(ApiErrorReason.InvalidResponse),
         )
         assertMessage(R.string.server_error, DomainError.Api(ApiErrorReason.ServerError))
         assertMessage(R.string.weather_error, DomainError.Api(ApiErrorReason.RequestFailed))
         assertEquals(
             R.string.city_not_found,
-            WeatherUiError.CitySearch(
-                DomainError.Api(ApiErrorReason.NotFound)
-            ).messageResource()
+            WeatherUiError
+                .CitySearch(
+                    DomainError.Api(ApiErrorReason.NotFound),
+                ).messageResource(),
         )
     }
 
@@ -43,17 +44,17 @@ class WeatherUiErrorTest {
         assertMessage(
             R.string.location_permission_denied,
             DomainError.Location(LocationErrorReason.PermissionDenied),
-            ::locationError
+            ::locationError,
         )
         assertMessage(
             R.string.location_unavailable_error,
             DomainError.Location(LocationErrorReason.Unavailable),
-            ::locationError
+            ::locationError,
         )
         assertMessage(
             R.string.location_resolution_error,
             DomainError.Location(LocationErrorReason.ResolutionFailed),
-            ::locationError
+            ::locationError,
         )
     }
 
@@ -65,7 +66,7 @@ class WeatherUiErrorTest {
     private fun assertMessage(
         expected: Int,
         error: DomainError,
-        uiError: (DomainError) -> WeatherUiError = WeatherUiError::Weather
+        uiError: (DomainError) -> WeatherUiError = WeatherUiError::Weather,
     ) {
         assertEquals(expected, uiError(error).messageResource())
     }
