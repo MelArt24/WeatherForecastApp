@@ -36,6 +36,9 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x ./gradlew
 
+      - name: Run static analysis
+        run: ./gradlew ktlintCheck detekt
+
       - name: Build with Gradle
         run: ./gradlew build
 
