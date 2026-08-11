@@ -12,6 +12,15 @@ class ClockTimeProvider(
     override fun currentTimeMillis(): Long = clock.millis()
 }
 
+/**
+ * Defines two independent cache windows.
+ *
+ * Entries at either age limit remain valid because both boundaries are inclusive. A timestamp
+ * later than [TimeProvider.currentTimeMillis], or an age that cannot be represented by [Long], is
+ * rejected instead of being treated as fresh. [ttlMillis] is the normal freshness window, while
+ * [maxOfflineAgeMillis] is the longer fallback window used when the network or remote request is
+ * unavailable.
+ */
 class WeatherCachePolicy(
     val ttlMillis: Long = DEFAULT_TTL_MILLIS,
     val maxOfflineAgeMillis: Long = DEFAULT_MAX_OFFLINE_AGE_MILLIS,

@@ -20,6 +20,13 @@ class GetCurrentLocationUseCase(
             override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
         },
 ) {
+    /**
+     * Returns a saved location when offline or when acquiring a current location fails.
+     *
+     * If no saved value is available, an offline probe produces an offline domain failure, while
+     * an acquisition failure is rethrown unchanged. Saving a newly acquired location is
+     * best-effort; cancellation is always propagated.
+     */
     suspend operator fun invoke(): UserLocation {
         if (!networkMonitor.isOnlineOrDomainFailure()) {
             return loadSavedLocation() ?: throw DomainFailureException(

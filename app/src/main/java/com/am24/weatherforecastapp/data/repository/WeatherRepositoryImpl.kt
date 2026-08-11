@@ -85,6 +85,8 @@ class WeatherRepositoryImpl(
                 @Suppress("TooGenericExceptionCaught", "SwallowedException")
                 remoteFailure: Exception,
             ) {
+                // This boundary includes transport, decoding, and mapping failures so each can use
+                // the same stale-cache fallback before being translated to a domain error.
                 cached
                     ?.takeIf { cachePolicy.isUsableOffline(it.cachedAtMillis, now) }
                     ?.forecast ?: throw DomainFailureException(remoteFailure.toWeatherDomainError())

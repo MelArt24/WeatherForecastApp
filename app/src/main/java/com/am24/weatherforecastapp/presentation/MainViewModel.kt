@@ -38,6 +38,9 @@ class MainViewModel(
     val events: Flow<WeatherUiEvent> = _events.receiveAsFlow()
 
     private var weatherRequestJob: Job? = null
+
+    // Cancellation is cooperative, so every state mutation also checks this generation. A late
+    // completion from an older request therefore cannot overwrite the latest request's UI state.
     private var requestId = 0L
     private var lastRequest: Request? = null
 
@@ -69,6 +72,8 @@ class MainViewModel(
                     @Suppress("TooGenericExceptionCaught", "SwallowedException")
                     e: Exception,
                 ) {
+                    // The presentation boundary keeps unexpected failures from escaping without a
+                    // user-visible state; known domain failures are handled above.
                     showError(id, WeatherUiError.CitySearch(DomainError.Unknown))
                 } finally {
                     finishRequest(id)
@@ -95,6 +100,8 @@ class MainViewModel(
                         @Suppress("TooGenericExceptionCaught", "SwallowedException")
                         locationFailure: Exception,
                     ) {
+                        // The presentation boundary maps unexpected failures after known domain and
+                        // cancellation cases have been handled above.
                         showError(id, WeatherUiError.Location(DomainError.Unknown))
                         finishRequest(id)
                         return@launch
@@ -118,6 +125,8 @@ class MainViewModel(
                     @Suppress("TooGenericExceptionCaught", "SwallowedException")
                     weatherFailure: Exception,
                 ) {
+                    // The presentation boundary maps unexpected failures after known domain and
+                    // cancellation cases have been handled above.
                     showError(id, WeatherUiError.Weather(DomainError.Unknown))
                 } finally {
                     finishRequest(id)

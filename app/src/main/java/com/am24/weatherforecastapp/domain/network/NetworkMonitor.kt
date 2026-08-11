@@ -10,6 +10,7 @@ interface NetworkMonitor {
     fun observeConnectivity(): Flow<Boolean>
 }
 
+/** Converts a connectivity probe failure into the domain contract instead of assuming a state. */
 fun NetworkMonitor.isOnlineOrDomainFailure(): Boolean =
     try {
         isOnline()

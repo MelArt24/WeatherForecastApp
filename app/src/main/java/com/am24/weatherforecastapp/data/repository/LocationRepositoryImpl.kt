@@ -41,6 +41,8 @@ class LocationRepositoryImpl(
                 @Suppress("TooGenericExceptionCaught", "SwallowedException")
                 failure: Exception,
             ) {
+                // Play Services can deliver multiple failure types through the task; all
+                // non-cancellation failures cross this repository as location domain errors.
                 throw DomainFailureException(failure.toLocationDomainError())
             }
         val placeName =
@@ -52,6 +54,7 @@ class LocationRepositoryImpl(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
+                // Coordinates remain useful when optional reverse geocoding is unavailable.
                 null
             }
         return UserLocation(

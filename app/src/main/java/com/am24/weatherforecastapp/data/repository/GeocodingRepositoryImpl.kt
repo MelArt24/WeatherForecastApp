@@ -67,6 +67,8 @@ class GeocodingRepositoryImpl(
             @Suppress("TooGenericExceptionCaught", "SwallowedException")
             failure: Exception,
         ) {
+            // Geocoder providers expose inconsistent failures; this is the domain boundary for all
+            // non-cancellation provider errors.
             throw DomainFailureException(failure.toLocationDomainError())
         }
 
