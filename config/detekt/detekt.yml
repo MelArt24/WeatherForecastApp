@@ -3,13 +3,26 @@ config:
   warningsAsErrors: true
 
 complexity:
+  CyclomaticComplexMethod:
+    ignoreSimpleWhenEntries: true
+  LongMethod:
+    excludes:
+      - '**/presentation/screens/MainScreen.kt'
+      - '**/test/**'
+      - '**/androidTest/**'
   LongParameterList:
     ignoreAnnotated:
       - Composable
     excludes:
+      - '**/data/remote/WeatherApiService.kt'
+      - '**/data/repository/WeatherRepositoryImpl.kt'
       - '**/test/**'
       - '**/androidTest/**'
   TooManyFunctions:
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+  LargeClass:
     excludes:
       - '**/test/**'
       - '**/androidTest/**'
@@ -39,11 +52,20 @@ style:
     ignoreEnums: true
     ignoreRanges: true
     excludes:
+      - '**/domain/model/WeatherCondition.kt'
       - '**/test/**'
       - '**/androidTest/**'
   MaxLineLength:
     active: false
   NewLineAtEndOfFile:
     active: false
+  ReturnCount:
+    excludeGuardClauses: true
+    excludes:
+      - '**/data/local/SavedLocationLocalDataSource.kt'
+  ThrowsCount:
+    excludeGuardClauses: true
+    excludes:
+      - '**/domain/usecase/GetCurrentLocationUseCase.kt'
   WildcardImport:
     active: false

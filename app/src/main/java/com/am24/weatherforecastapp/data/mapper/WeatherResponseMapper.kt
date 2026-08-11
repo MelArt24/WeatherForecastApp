@@ -14,14 +14,7 @@ import com.am24.weatherforecastapp.domain.model.WeatherForecast
 import com.am24.weatherforecastapp.domain.model.weatherConditionFromIcon
 
 fun WeatherResponseDto.toDomain(): WeatherForecast {
-    if (
-        lat.isBlank() ||
-        lon.isBlank() ||
-        timezone.isBlank() ||
-        units.isBlank() ||
-        current.summary.isBlank() ||
-        !current.temperature.isFinite()
-    ) {
+    if (hasInvalidMetadata() || current.hasInvalidWeather()) {
         throw InvalidWeatherResponseException()
     }
     return WeatherForecast(
@@ -31,6 +24,10 @@ fun WeatherResponseDto.toDomain(): WeatherForecast {
         hourly = hourly.toDomain(),
     )
 }
+
+private fun WeatherResponseDto.hasInvalidMetadata(): Boolean = lat.isBlank() || lon.isBlank() || timezone.isBlank() || units.isBlank()
+
+private fun CurrentWeatherDto.hasInvalidWeather(): Boolean = summary.isBlank() || !temperature.isFinite()
 
 fun CurrentWeatherDto.toDomain(): CurrentWeather =
     CurrentWeather(

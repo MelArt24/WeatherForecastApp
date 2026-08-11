@@ -32,7 +32,10 @@ class GetCurrentLocationUseCase(
                 locationRepository.getCurrentLocation()
             } catch (cancellation: CancellationException) {
                 throw cancellation
-            } catch (locationFailure: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught")
+                locationFailure: Exception,
+            ) {
                 val savedLocation = loadSavedLocation()
                 return savedLocation ?: throw locationFailure
             }

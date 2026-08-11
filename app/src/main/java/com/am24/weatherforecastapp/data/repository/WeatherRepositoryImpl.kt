@@ -81,7 +81,10 @@ class WeatherRepositoryImpl(
                 forecast
             } catch (cancellation: CancellationException) {
                 throw cancellation
-            } catch (remoteFailure: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught", "SwallowedException")
+                remoteFailure: Exception,
+            ) {
                 cached
                     ?.takeIf { cachePolicy.isUsableOffline(it.cachedAtMillis, now) }
                     ?.forecast ?: throw DomainFailureException(remoteFailure.toWeatherDomainError())

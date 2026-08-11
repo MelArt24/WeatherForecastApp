@@ -7,6 +7,8 @@ import java.time.Clock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
+private const val HOUR_MINUTE_TEXT_LENGTH = 5
+
 class WeatherPresentationMapper(
     private val conditionLocalizer: WeatherConditionLocalizer,
     private val clock: Clock = Clock.systemDefaultZone(),
@@ -20,7 +22,7 @@ class WeatherPresentationMapper(
             forecast.hourly.map { hour ->
                 WeatherModel(
                     city = cityName,
-                    time = hour.date.substringAfterLast('T').take(5),
+                    time = hour.date.substringAfterLast('T').take(HOUR_MINUTE_TEXT_LENGTH),
                     condition = conditionLocalizer.localize(hour.condition, hour.summary),
                     currentTemperature = hour.temperature.toInt().toString() + "\u00B0C",
                     minimumTemperature = "",

@@ -660,7 +660,7 @@ class MainViewModelTest {
             val viewModel =
                 viewModel(
                     FakeWeatherRepository(response = {
-                        if (requestCount++ == 0) successForecast() else throw IllegalStateException()
+                        if (requestCount++ == 0) successForecast() else error("Unexpected additional request")
                     }),
                 )
 

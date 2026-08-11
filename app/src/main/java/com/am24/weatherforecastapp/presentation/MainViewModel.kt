@@ -65,7 +65,10 @@ class MainViewModel(
                     throw cancellation
                 } catch (failure: DomainFailureException) {
                     showError(id, WeatherUiError.CitySearch(failure.error))
-                } catch (e: Exception) {
+                } catch (
+                    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+                    e: Exception,
+                ) {
                     showError(id, WeatherUiError.CitySearch(DomainError.Unknown))
                 } finally {
                     finishRequest(id)
@@ -88,7 +91,10 @@ class MainViewModel(
                         showError(id, WeatherUiError.Location(failure.error))
                         finishRequest(id)
                         return@launch
-                    } catch (locationFailure: Exception) {
+                    } catch (
+                        @Suppress("TooGenericExceptionCaught", "SwallowedException")
+                        locationFailure: Exception,
+                    ) {
                         showError(id, WeatherUiError.Location(DomainError.Unknown))
                         finishRequest(id)
                         return@launch
@@ -108,7 +114,10 @@ class MainViewModel(
                     throw cancellation
                 } catch (failure: DomainFailureException) {
                     showError(id, WeatherUiError.Weather(failure.error))
-                } catch (weatherFailure: Exception) {
+                } catch (
+                    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+                    weatherFailure: Exception,
+                ) {
                     showError(id, WeatherUiError.Weather(DomainError.Unknown))
                 } finally {
                     finishRequest(id)

@@ -71,6 +71,9 @@ import com.am24.weatherforecastapp.presentation.WeatherUiState
 import com.am24.weatherforecastapp.presentation.model.WeatherModel
 import com.am24.weatherforecastapp.presentation.theme.Black
 import com.am24.weatherforecastapp.presentation.theme.BlueBg
+import com.am24.weatherforecastapp.presentation.theme.OfflineBannerBackgroundColor
+import com.am24.weatherforecastapp.presentation.theme.ScreenGradientBottomColor
+import com.am24.weatherforecastapp.presentation.theme.ScreenGradientTopColor
 import kotlinx.coroutines.launch
 
 @Composable
@@ -135,8 +138,8 @@ fun MainScreenContent(
                         Brush.verticalGradient(
                             colors =
                                 listOf(
-                                    Color(0xFF512DA8),
-                                    Color(0xFF2196F3),
+                                    ScreenGradientTopColor,
+                                    ScreenGradientBottomColor,
                                 ),
                         ),
                 ),
@@ -201,7 +204,7 @@ private fun InternetConnectivityBanner() {
                 .padding(top = 6.dp)
                 .semantics { liveRegion = LiveRegionMode.Polite },
         shape = RoundedCornerShape(8.dp),
-        color = Color(0xFFEA1200),
+        color = OfflineBannerBackgroundColor,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
         tonalElevation = 2.dp,
     ) {

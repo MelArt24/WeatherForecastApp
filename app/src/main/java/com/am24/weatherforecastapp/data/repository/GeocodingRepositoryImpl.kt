@@ -12,6 +12,7 @@ import com.am24.weatherforecastapp.domain.error.LocationErrorReason
 import com.am24.weatherforecastapp.domain.model.GeocodedLocation
 import com.am24.weatherforecastapp.domain.repository.GeocodingRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -19,6 +20,7 @@ import kotlin.coroutines.resume
 
 class GeocodingRepositoryImpl(
     private val context: Context,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : GeocodingRepository {
     override suspend fun searchLocation(query: String): GeocodedLocation? {
         if (!Geocoder.isPresent()) throw providerUnavailable()
@@ -61,7 +63,10 @@ class GeocodingRepositoryImpl(
             block()
         } catch (cancellation: CancellationException) {
             throw cancellation
-        } catch (failure: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught", "SwallowedException")
+            failure: Exception,
+        ) {
             throw DomainFailureException(failure.toLocationDomainError())
         }
 
@@ -88,7 +93,7 @@ class GeocodingRepositoryImpl(
 
     @Suppress("DEPRECATION")
     private suspend fun searchLegacy(query: String): Address? =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             geocoder().getFromLocationName(query, 1)?.firstOrNull()
         }
 
@@ -108,7 +113,7 @@ class GeocodingRepositoryImpl(
         latitude: Double,
         longitude: Double,
     ): Address? =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             geocoder().getFromLocation(latitude, longitude, 1)?.firstOrNull()
         }
 }

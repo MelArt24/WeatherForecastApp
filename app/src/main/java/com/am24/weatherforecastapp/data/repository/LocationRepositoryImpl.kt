@@ -37,7 +37,10 @@ class LocationRepositoryImpl(
                 getCoordinates()
             } catch (cancellation: CancellationException) {
                 throw cancellation
-            } catch (failure: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught", "SwallowedException")
+                failure: Exception,
+            ) {
                 throw DomainFailureException(failure.toLocationDomainError())
             }
         val placeName =
