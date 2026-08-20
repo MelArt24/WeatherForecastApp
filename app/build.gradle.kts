@@ -26,7 +26,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.am24.weatherforecastapp"
+        applicationId = "com.am24.imbrel"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -170,12 +170,12 @@ kover {
         filters {
             excludes {
                 classes(
-                    "com.am24.weatherforecastapp.BuildConfig",
-                    "com.am24.weatherforecastapp.R",
-                    "com.am24.weatherforecastapp.R\$*",
-                    "com.am24.weatherforecastapp.*ComposableSingletons*",
-                    "com.am24.weatherforecastapp.data.local.*_Impl*",
-                    "com.am24.weatherforecastapp.presentation.theme.*",
+                    "com.am24.imbrel.BuildConfig",
+                    "com.am24.imbrel.R",
+                    "com.am24.imbrel.R\$*",
+                    "com.am24.imbrel.*ComposableSingletons*",
+                    "com.am24.imbrel.data.local.*_Impl*",
+                    "com.am24.imbrel.presentation.theme.*",
                 )
             }
         }
