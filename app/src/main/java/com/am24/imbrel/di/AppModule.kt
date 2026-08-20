@@ -5,7 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
-import com.am24.imbrel.BuildConfig
 import com.am24.imbrel.data.cache.ClockTimeProvider
 import com.am24.imbrel.data.cache.TimeProvider
 import com.am24.imbrel.data.cache.WeatherCachePolicy
@@ -69,7 +68,6 @@ val appModule =
                 timeProvider = get(),
                 cachePolicy = get(),
                 networkMonitor = get(),
-                apiKey = BuildConfig.WEATHER_API_KEY,
             )
         }
 

@@ -1,6 +1,5 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -11,15 +10,6 @@ plugins {
     alias(libs.plugins.ktlint)
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
 }
-
-val localProperties =
-    Properties().apply {
-        val file = rootProject.file("local.properties")
-        if (file.exists()) {
-            load(file.inputStream())
-        }
-    }
-val weatherApiKey = localProperties.getProperty("WEATHER_API_KEY") ?: System.getenv("WEATHER_API_KEY") ?: ""
 
 android {
     namespace = "com.am24.imbrel"
@@ -33,8 +23,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        buildConfigField("String", "WEATHER_API_KEY", weatherApiKey)
     }
 
     buildTypes {
@@ -57,7 +45,6 @@ android {
 
     buildFeatures {
         viewBinding = true
-        buildConfig = true
         compose = true
     }
 
@@ -170,7 +157,6 @@ kover {
         filters {
             excludes {
                 classes(
-                    "com.am24.imbrel.BuildConfig",
                     "com.am24.imbrel.R",
                     "com.am24.imbrel.R\$*",
                     "com.am24.imbrel.*ComposableSingletons*",

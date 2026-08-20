@@ -251,7 +251,6 @@ class WeatherRepositoryImplTest {
         timeProvider = TimeProvider { now },
         cachePolicy = WeatherCachePolicy(ttl),
         networkMonitor = FakeNetworkMonitor(online),
-        apiKey = "key",
         timezone = "UTC",
     )
 
@@ -305,7 +304,6 @@ class WeatherRepositoryImplTest {
             timezone: String,
             language: String,
             units: String,
-            apiKey: String,
         ): WeatherResponseDto {
             calls++
             failure?.let { throw it }

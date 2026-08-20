@@ -34,7 +34,6 @@ class WeatherRepositoryImpl(
 
             override fun observeConnectivity(): Flow<Boolean> = flowOf(true)
         },
-    private val apiKey: String,
     private val timezone: String = ZoneId.systemDefault().id,
 ) : WeatherRepository {
     override suspend fun getWeatherData(
@@ -73,7 +72,6 @@ class WeatherRepositoryImpl(
                             lon = lon,
                             placeId = city?.takeIf { lat == null && lon == null },
                             timezone = timezone,
-                            apiKey = apiKey,
                         ).toDomain()
 
                 cacheKeysFor(lat, lon, city).forEach { key -> writeCache(key, forecast, now) }

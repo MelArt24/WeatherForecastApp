@@ -8,7 +8,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "https://www.meteosource.com/"
+    private const val BASE_URL = "https://imbrel-weather-api.animator2404.workers.dev/"
 
     private val json =
         Json {

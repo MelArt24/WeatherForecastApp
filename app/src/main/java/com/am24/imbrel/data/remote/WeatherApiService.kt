@@ -4,7 +4,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface WeatherApiService {
-    @GET("api/v1/free/point")
+    @GET("weather")
     suspend fun getWeatherData(
         @Query("lat") lat: String? = null,
         @Query("lon") lon: String? = null,
@@ -13,6 +13,5 @@ interface WeatherApiService {
         @Query("timezone") timezone: String,
         @Query("language") language: String = "en",
         @Query("units") units: String = "metric",
-        @Query("key") apiKey: String,
     ): WeatherResponseDto
 }
