@@ -22,7 +22,7 @@ val localProperties =
 val weatherApiKey = localProperties.getProperty("WEATHER_API_KEY") ?: System.getenv("WEATHER_API_KEY") ?: ""
 
 android {
-    namespace = "com.am24.weatherforecastapp"
+    namespace = "com.am24.imbrel"
     compileSdk = 35
 
     defaultConfig {

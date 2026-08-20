@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "WeatherForecastApp"
+rootProject.name = "Imbrel"
 include(":app")
