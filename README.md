@@ -1,6 +1,6 @@
-# WeatherForecastApp
+# Imbrel
 
-WeatherForecastApp is an Android application that allows users to get up-to-date information about weather conditions in a selected location.
+Imbrel is an Android application that allows users to get up-to-date information about weather conditions in a selected location.
 
 To work with this project, you need to have Android SDK, Android Studio, and Gradle installed.
 
