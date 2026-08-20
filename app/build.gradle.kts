@@ -13,12 +13,12 @@ plugins {
 
 android {
     namespace = "com.am24.imbrel"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.am24.imbrel"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
